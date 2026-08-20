@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "cross-env ROLLDOWN_OPTIONS_VALIDATION=loose vite",
     "desktop": "cross-env NODE_ENV=development ROLLDOWN_OPTIONS_VALIDATION=loose concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "build": "tsc && vite build",
+    "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
   "build": {
