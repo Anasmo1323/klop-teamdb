@@ -1,0 +1,82 @@
+[
+  {
+    "nameEN": "Cleopatra Hospital (Heliopolis)",
+    "nameAR": "مستشفى كليوباترا (مصر الجديدة)",
+    "group": "Cleopatra Hospitals Group"
+  },
+  {
+    "nameEN": "Cleopatra Hospital (October)",
+    "nameAR": "مستشفى كليوباترا (اكتوبر)",
+    "group": "Cleopatra Hospitals Group"
+  },
+  {
+    "nameEN": "Cleopatra Hospital (5th Settlement)",
+    "nameAR": "مستشفى كليوباترا (التجمع الخامس)",
+    "group": "Cleopatra Hospitals Group"
+  },
+  {
+    "nameEN": "Cairo Specialized Hospital",
+    "nameAR": "مستشفى القاهرة التخصصي",
+    "group": "Cleopatra Hospitals Group"
+  },
+  {
+    "nameEN": "Nile Badrawy Hospital",
+    "nameAR": "مستشفى النيل بدراوي",
+    "group": "Cleopatra Hospitals Group"
+  },
+  {
+    "nameEN": "Al Shorouk Hospital",
+    "nameAR": "مستشفى الشروق",
+    "group": "Cleopatra Hospitals Group"
+  },
+  {
+    "nameEN": "El Katib Hospital",
+    "nameAR": "مستشفى الكاتب",
+    "group": "Cleopatra Hospitals Group"
+  },
+  {
+    "nameEN": "As-Salam International Hospital (Maadi)",
+    "nameAR": "مستشفى السلام الدولي (المعادي)",
+    "group": "Alameda Healthcare Group"
+  },
+  {
+    "nameEN": "As-Salam International Hospital (New Cairo)",
+    "nameAR": "مستشفى السلام الدولي (القاهرة الجديدة)",
+    "group": "Alameda Healthcare Group"
+  },
+  {
+    "nameEN": "Dar Al Fouad Hospital (6th of October)",
+    "nameAR": "مستشفى دار الفؤاد (السادس من أكتوبر)",
+    "group": "Alameda Healthcare Group"
+  },
+  {
+    "nameEN": "Dar Al Fouad Hospital (Nasr City)",
+    "nameAR": "مستشفى دار الفؤاد (مدينة نصر)",
+    "group": "Alameda Healthcare Group"
+  },
+  {
+    "nameEN": "Saudi German Hospital Cairo",
+    "nameAR": "المستشفى السعودي الألماني بالقاهرة",
+    "group": "Saudi German Health"
+  },
+  {
+    "nameEN": "Saudi German Hospital Alexandria",
+    "nameAR": "المستشفى السعودي الألماني بالإسكندرية",
+    "group": "Saudi German Health"
+  },
+  {
+    "nameEN": "Andalusia Hospital Maadi",
+    "nameAR": "مستشفى أندلسية المعادي",
+    "group": "Andalusia Group"
+  },
+  {
+    "nameEN": "Andalusia Hospital Smouha",
+    "nameAR": "مستشفى أندلسية سموحة",
+    "group": "Andalusia Group"
+  },
+  {
+    "nameEN": "Andalusia Hospital Shalalat",
+    "nameAR": "مستشفى أندلسية الشلالات",
+    "group": "Andalusia Group"
+  }
+]

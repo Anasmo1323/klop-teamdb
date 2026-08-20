@@ -1,0 +1,34 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger workflow on tags starting with v (e.g., v1.0.0, v1.0.1)
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Web App
+        run: npm run build
+
+      - name: Build and Release Electron App
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          build_script_name: build
+          args: --publish always
+          github_token: ${{ secrets.github_token }}
+        env:
+          GH_TOKEN: ${{ secrets.github_token }}
