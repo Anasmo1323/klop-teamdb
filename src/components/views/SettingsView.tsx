@@ -136,52 +136,7 @@ export function SettingsView({ isAdmin, currentUserEmail, extraAdmins = [], onLo
             </>
           )}
 
-          {/* Section 1 */}
-          <div className="flex items-start gap-6">
-            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-              <Palette className="w-5 h-5 text-gray-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-gray-900">Appearance</h3>
-              <p className="text-sm text-gray-500 mb-4">Customize how the application looks on your device.</p>
-              
-              <div className="flex items-center gap-4">
-                <button className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg shadow-sm border border-transparent">
-                  Dark Mode
-                </button>
-                <button className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm border border-gray-200">
-                  Light Mode
-                </button>
-                <button className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg shadow-sm border border-gray-200">
-                  System
-                </button>
-              </div>
-            </div>
-          </div>
 
-          <hr className="border-gray-100" />
-
-          {/* Section 2 */}
-          <div className="flex items-start gap-6">
-            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-              <Bell className="w-5 h-5 text-gray-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-              <p className="text-sm text-gray-500 mb-4">Manage when and how you receive alerts.</p>
-              
-              <div className="space-y-3">
-                <label className="flex items-center gap-3">
-                  <input type="checkbox" className="w-4 h-4 rounded text-primary focus:ring-primary border-gray-300" defaultChecked />
-                  <span className="text-sm text-gray-700 font-medium">Email notifications for new duplicate conflicts</span>
-                </label>
-                <label className="flex items-center gap-3">
-                  <input type="checkbox" className="w-4 h-4 rounded text-primary focus:ring-primary border-gray-300" defaultChecked />
-                  <span className="text-sm text-gray-700 font-medium">Weekly summary reports</span>
-                </label>
-              </div>
-            </div>
-          </div>
 
         </div>
       </div>

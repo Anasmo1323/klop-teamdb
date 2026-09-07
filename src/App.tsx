@@ -2,11 +2,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { db, auth } from "./firebase";
-import { CustomerForm } from "./components/CustomerForm";
+import { ContactForm } from "./components/ContactForm";
 import { SidebarNav } from "./components/layout/SidebarNav";
 import { TopBar } from "./components/layout/TopBar";
-import { DashboardView } from "./components/views/DashboardView";
-import { CustomersView } from "./components/views/CustomersView";
+
+import { ContactsView } from "./components/views/ContactsView";
 import { FilesView } from "./components/views/FilesView";
 import { SettingsView } from "./components/views/SettingsView";
 import { LoginView } from "./components/views/LoginView";
@@ -17,13 +17,14 @@ export const HARDCODED_ADMINS = [
   "asalah@technowave-eg.com"
 ];
 
-export type Customer = {
+export type Contact = {
   id: string;
   hospitalName: string;
   employeeName: string;
   position: string;
   mobileNumber: string;
   email: string;
+  addedBy?: string;
   attachedFiles?: { name: string; url: string }[];
   flagged?: boolean;
   createdAt?: string;
@@ -31,11 +32,11 @@ export type Customer = {
 };
 
 function App() {
-  const [data, setData] = useState<Customer[]>([]);
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [customerTab, setCustomerTab] = useState<"all" | "recent" | "flagged">("all");
+  const [data, setData] = useState<Contact[]>([]);
+  const [activeTab, setActiveTab] = useState("contacts");
+  const [contactTab, setContactTab] = useState<"all" | "recent" | "flagged">("all");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     hospitalName: "",
@@ -59,21 +60,21 @@ function App() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["Employee Name", "Hospital", "Position", "Mobile", "Email", "Files Count"];
+    const headers = ["HOSPITAL NAME", "EMPLOYEE NAME", "POSITION", "MOBILE NUMBER", "EMAIL", "ADDED BY"];
     const rows = data.map(d => [
-      `"${d.employeeName}"`,
       `"${d.hospitalName}"`,
+      `"${d.employeeName}"`,
       `"${d.position}"`,
-      `"${d.mobileNumber}"`,
+      `"=""${d.mobileNumber}"""`,
       `"${d.email}"`,
-      d.attachedFiles?.length || 0
+      `"${d.addedBy || ""}"`
     ]);
     const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "customers_export.csv");
+    link.setAttribute("download", "contacts_export.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -94,13 +95,13 @@ function App() {
       setAuthLoading(false);
     });
 
-    const q = query(collection(db, "customers"));
-    const unsubscribeCustomers = onSnapshot(q, (querySnapshot) => {
-      const customersList: Customer[] = [];
+    const q = query(collection(db, "contacts"));
+    const unsubscribeContacts = onSnapshot(q, (querySnapshot) => {
+      const contactsList: Contact[] = [];
       querySnapshot.forEach((doc) => {
-        customersList.push({ id: doc.id, ...doc.data() } as Customer);
+        contactsList.push({ id: doc.id, ...doc.data() } as Contact);
       });
-      setData(customersList);
+      setData(contactsList);
     });
 
     const adminsQuery = query(collection(db, "admins"));
@@ -111,7 +112,7 @@ function App() {
 
     return () => {
       unsubscribeAuth();
-      unsubscribeCustomers();
+      unsubscribeContacts();
       unsubscribeAdmins();
     };
   }, []);
@@ -119,10 +120,10 @@ function App() {
   const filteredData = useMemo(() => {
     let result = data;
 
-    // 1. Apply Customer Tab (All, Recent, Flagged)
-    if (customerTab === "flagged") {
+    // 1. Apply Contact Tab (All, Recent, Flagged)
+    if (contactTab === "flagged") {
       result = result.filter(c => c.flagged === true);
-    } else if (customerTab === "recent") {
+    } else if (contactTab === "recent") {
       // Recent means created in the last 7 days
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -159,27 +160,30 @@ function App() {
     }
 
     return result;
-  }, [data, searchQuery, filters, customerTab]);
+  }, [data, searchQuery, filters, contactTab]);
 
   const flaggedCount = data.filter(c => c.flagged === true).length;
 
   const renderContent = () => {
     switch (activeTab) {
-      case "dashboard":
-        return <DashboardView data={filteredData} />;
-      case "customers":
-        return <CustomersView 
+      case "contacts":
+        return <ContactsView 
           data={filteredData} 
           searchQuery={searchQuery} 
           isAdmin={isAdmin} 
-          onEdit={(c) => setEditingCustomer(c)} 
+          onEdit={(c) => setEditingContact(c)} 
         />;
       case "files":
         return <FilesView data={filteredData} />;
       case "settings":
         return <SettingsView isAdmin={isAdmin} currentUserEmail={currentUserEmail} onLogout={handleLogout} extraAdmins={extraAdmins} />;
       default:
-        return <DashboardView data={data} />;
+        return <ContactsView 
+          data={filteredData} 
+          searchQuery={searchQuery} 
+          isAdmin={isAdmin} 
+          onEdit={(c) => setEditingContact(c)} 
+        />;
     }
   };
 
@@ -201,6 +205,7 @@ function App() {
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
         onAddClick={() => setShowAddForm(true)} 
+        onExportCSV={handleExportCSV}
       />
       
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -211,8 +216,8 @@ function App() {
           onExportCSV={handleExportCSV}
           filters={filters}
           onFiltersChange={setFilters}
-          customerTab={customerTab}
-          onCustomerTabChange={setCustomerTab}
+          contactTab={contactTab}
+          onContactTabChange={setContactTab}
           flaggedCount={flaggedCount}
         />
         
@@ -221,14 +226,14 @@ function App() {
         </div>
 
         {/* Slide-over Form for Add or Edit */}
-        {(showAddForm || editingCustomer) && (
+        {(showAddForm || editingContact) && (
           <div className="absolute inset-0 z-50 flex justify-end">
-            <div className="absolute inset-0 bg-gray-900/20 backdrop-blur-[2px]" onClick={() => { setShowAddForm(false); setEditingCustomer(null); }} />
+            <div className="absolute inset-0 bg-gray-900/20 backdrop-blur-[2px]" onClick={() => { setShowAddForm(false); setEditingContact(null); }} />
             <div className="relative w-full max-w-[500px] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-300">
-              <CustomerForm 
-                initialData={editingCustomer}
-                onSuccess={() => { setShowAddForm(false); setEditingCustomer(null); }} 
-                onCancel={() => { setShowAddForm(false); setEditingCustomer(null); }} 
+              <ContactForm 
+                initialData={editingContact}
+                onSuccess={() => { setShowAddForm(false); setEditingContact(null); }} 
+                onCancel={() => { setShowAddForm(false); setEditingContact(null); }} 
               />
             </div>
           </div>

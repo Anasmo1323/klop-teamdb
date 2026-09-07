@@ -11,12 +11,12 @@ interface TopBarProps {
   onExportCSV: () => void;
   filters: { hospitalName: string; position: string; hasFiles: boolean | null };
   onFiltersChange: (f: any) => void;
-  customerTab: "all" | "recent" | "flagged";
-  onCustomerTabChange: (tab: "all" | "recent" | "flagged") => void;
+  contactTab: "all" | "recent" | "flagged";
+  onContactTabChange: (tab: "all" | "recent" | "flagged") => void;
   flaggedCount: number;
 }
 
-export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, filters, onFiltersChange, customerTab, onCustomerTabChange, flaggedCount }: TopBarProps) {
+export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, filters, onFiltersChange, contactTab, onContactTabChange, flaggedCount }: TopBarProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -34,10 +34,7 @@ export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, f
       {/* Row 1: Header & Actions */}
       <div className="flex items-center justify-between w-full">
         <div className="flex items-end gap-3">
-          <h1 className="text-[28px] font-bold tracking-tight text-gray-900 leading-none">Customer Database</h1>
-          <span className="text-sm font-medium text-gray-500 mb-[2px] bg-gray-200/60 px-2 py-0.5 rounded-md">
-            v2.1
-          </span>
+          <h1 className="text-[28px] font-bold tracking-tight text-gray-900 leading-none">KLOP Team Database</h1>
         </div>
 
         <div className="flex items-center gap-3">
@@ -54,7 +51,7 @@ export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, f
                   type="text" 
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  placeholder="Search customers..."
+                  placeholder="Search contacts..."
                   className="flex-1 bg-transparent border-none focus:outline-none px-2 text-sm text-gray-900"
                 />
                 <button 
@@ -167,7 +164,7 @@ export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, f
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   <Download className="w-4 h-4 text-gray-500" />
-                  Export CSV
+                  Export Database
                 </button>
               </div>
             )}
@@ -180,7 +177,7 @@ export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, f
             className="rounded-full bg-primary hover:bg-primary/90 text-white shadow-sm px-5 h-10"
           >
             <Plus className="w-4 h-4 mr-1.5" />
-            New Customer
+            New Contact
           </Button>
         </div>
       </div>
@@ -188,28 +185,28 @@ export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, f
       {/* Row 2: Tabs */}
       <div className="flex items-center p-1 bg-gray-200/50 rounded-xl w-fit">
         <button 
-          onClick={() => onCustomerTabChange("all")}
+          onClick={() => onContactTabChange("all")}
           className={cn(
             "px-4 py-1.5 text-sm font-medium rounded-lg transition-colors",
-            customerTab === "all" ? "text-gray-900 bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            contactTab === "all" ? "text-gray-900 bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
           )}
         >
-          All Customers
+          All Contacts
         </button>
         <button 
-          onClick={() => onCustomerTabChange("recent")}
+          onClick={() => onContactTabChange("recent")}
           className={cn(
             "px-4 py-1.5 text-sm font-medium rounded-lg transition-colors",
-            customerTab === "recent" ? "text-gray-900 bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            contactTab === "recent" ? "text-gray-900 bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
           )}
         >
           Recent
         </button>
         <button 
-          onClick={() => onCustomerTabChange("flagged")}
+          onClick={() => onContactTabChange("flagged")}
           className={cn(
             "px-4 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-2",
-            customerTab === "flagged" ? "text-gray-900 bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+            contactTab === "flagged" ? "text-gray-900 bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"
           )}
         >
           Flagged

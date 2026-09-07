@@ -1,19 +1,19 @@
 import { FileText, Download, ExternalLink } from "lucide-react";
 
-interface Customer {
+interface Contact {
   employeeName: string;
   attachedFiles?: { name: string; url: string }[];
 }
 
 interface FilesViewProps {
-  data: Customer[];
+  data: Contact[];
 }
 
 export function FilesView({ data }: FilesViewProps) {
-  const allFiles = data.flatMap(customer => 
-    (customer.attachedFiles || []).map(file => ({ 
+  const allFiles = data.flatMap(contact => 
+    (contact.attachedFiles || []).map(file => ({ 
       ...file, 
-      customerName: customer.employeeName 
+      contactName: contact.employeeName 
     }))
   );
 
@@ -32,7 +32,7 @@ export function FilesView({ data }: FilesViewProps) {
             <FileText className="w-8 h-8 text-gray-400" />
           </div>
           <h3 className="text-base font-semibold text-gray-900 mb-1">No files found</h3>
-          <p className="text-sm text-gray-500">Files attached to customers will appear here.</p>
+          <p className="text-sm text-gray-500">Files attached to contacts will appear here.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -57,7 +57,7 @@ export function FilesView({ data }: FilesViewProps) {
                         {file.name}
                       </p>
                       <p className="text-xs text-gray-500 truncate mt-0.5">
-                        Uploaded by: <span className="font-medium text-gray-700">{file.customerName}</span>
+                        Uploaded by: <span className="font-medium text-gray-700">{file.contactName}</span>
                       </p>
                     </div>
                   </div>

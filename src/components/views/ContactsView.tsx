@@ -12,18 +12,18 @@ import {
 } from "@tanstack/react-table";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import type { Customer } from "../../App";
+import type { Contact } from "../../App";
 
-interface CustomersViewProps {
-  data: Customer[];
+interface ContactsViewProps {
+  data: Contact[];
   searchQuery?: string;
   isAdmin?: boolean;
-  onEdit?: (customer: Customer) => void;
+  onEdit?: (contact: Contact) => void;
 }
 
-const columnHelper = createColumnHelper<Customer>();
+const columnHelper = createColumnHelper<Contact>();
 
-export function CustomersView({ data, searchQuery = "", isAdmin = false, onEdit }: CustomersViewProps) {
+export function ContactsView({ data, searchQuery = "", isAdmin = false, onEdit }: ContactsViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns = useMemo(() => [
@@ -64,6 +64,10 @@ export function CustomersView({ data, searchQuery = "", isAdmin = false, onEdit 
       header: "Email",
       cell: (info) => <span className="text-sm text-gray-600 truncate max-w-[160px] block">{info.getValue()}</span>,
     }),
+    columnHelper.accessor("addedBy", {
+      header: "Added By",
+      cell: (info) => <span className="text-sm text-gray-600 block whitespace-nowrap">{info.getValue() || "—"}</span>,
+    }),
     columnHelper.accessor("attachedFiles", {
       header: "Files",
       enableSorting: false,
@@ -95,14 +99,14 @@ export function CustomersView({ data, searchQuery = "", isAdmin = false, onEdit 
       id: "actions",
       header: "",
       cell: (info) => {
-        const customer = info.row.original;
+        const contact = info.row.original;
         
         const toggleFlag = async (e: React.MouseEvent) => {
           e.stopPropagation();
           if (!isAdmin) return;
           try {
-            const docRef = doc(db, "customers", customer.id);
-            await updateDoc(docRef, { flagged: !customer.flagged });
+            const docRef = doc(db, "contacts", contact.id);
+            await updateDoc(docRef, { flagged: !contact.flagged });
           } catch (err) {
             console.error("Failed to toggle flag:", err);
           }
@@ -113,14 +117,14 @@ export function CustomersView({ data, searchQuery = "", isAdmin = false, onEdit 
             <button 
               onClick={toggleFlag}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 transition-colors"
-              title={customer.flagged ? "Remove Flag" : "Flag Customer"}
+              title={contact.flagged ? "Remove Flag" : "Flag Contact"}
             >
-              <Flag className={cn("w-4 h-4", customer.flagged ? "text-red-500 fill-red-500" : "text-gray-400")} />
+              <Flag className={cn("w-4 h-4", contact.flagged ? "text-red-500 fill-red-500" : "text-gray-400")} />
             </button>
             <button 
-              onClick={() => onEdit && onEdit(customer)}
+              onClick={() => onEdit && onEdit(contact)}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 text-gray-500 transition-colors"
-              title="Edit Customer"
+              title="Edit Contact"
             >
               <MoreHorizontal className="w-4 h-4" />
             </button>
@@ -204,7 +208,7 @@ export function CustomersView({ data, searchQuery = "", isAdmin = false, onEdit 
               ) : (
                 <tr>
                   <td colSpan={columns.length} className="h-32 text-center text-gray-500 text-sm">
-                    No customers found. Click "New Customer" to add one.
+                    No contacts found. Click "New Contact" to add one.
                   </td>
                 </tr>
               )}

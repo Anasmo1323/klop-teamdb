@@ -1,10 +1,7 @@
 import { 
-  LayoutDashboard, 
   Users, 
-  UserPlus, 
   FolderOpen, 
-  Settings, 
-  Hexagon
+  Settings
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -12,23 +9,17 @@ interface SidebarNavProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onAddClick: () => void;
+  onExportCSV?: () => void;
 }
 
-export function SidebarNav({ activeTab, onTabChange, onAddClick }: SidebarNavProps) {
+export function SidebarNav({ activeTab, onTabChange, onAddClick, onExportCSV }: SidebarNavProps) {
   const topNav = [
-    { id: "dashboard", icon: LayoutDashboard },
-    { id: "customers", icon: Users },
-    { id: "add", icon: UserPlus },
+    { id: "contacts", icon: Users },
     { id: "files", icon: FolderOpen },
   ];
 
   return (
     <div className="w-[72px] h-screen bg-[#14161C] flex flex-col items-center py-6 shrink-0 border-r border-[#1e2129] z-20">
-      {/* Brand Logo */}
-      <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center mb-8 shadow-lg shadow-primary/20">
-        <Hexagon className="w-6 h-6 text-white" />
-      </div>
-
       {/* Main Nav */}
       <nav className="flex-1 flex flex-col items-center gap-4 w-full">
         {topNav.map((item) => {
@@ -79,7 +70,6 @@ export function SidebarNav({ activeTab, onTabChange, onAddClick }: SidebarNavPro
             Settings
           </div>
         </button>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-purple-500 border-2 border-[#14161C] mt-2 cursor-pointer shadow-sm" />
       </div>
     </div>
   );
