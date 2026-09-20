@@ -81,10 +81,6 @@ function App() {
   };
 
   useEffect(() => {
-    if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) {
-      setAuthLoading(false);
-      return;
-    }
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user && user.email) {
