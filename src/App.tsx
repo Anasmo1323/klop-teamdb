@@ -9,12 +9,20 @@ import { TopBar } from "./components/layout/TopBar";
 import { ContactsView } from "./components/views/ContactsView";
 import { FilesView } from "./components/views/FilesView";
 import { SettingsView } from "./components/views/SettingsView";
+import { ExchangeRatesProvider } from "./contexts/ExchangeRatesContext";
+import { ExchangeRateBanner } from "./contexts/ExchangeRateBanner";
 import { LoginView } from "./components/views/LoginView";
+import { DashboardPage, TargetsPage, ForecastPage, PipelinesPage, PurchaseOrdersPage, InvoicesPage, SalesTeamPage, SetupPage } from "./components/views/crm/Pages";
+import { CrmShell } from "./components/views/crm/CrmShell";
 
-export const HARDCODED_ADMINS = [
+export const ALLOWED_USERS = [
   "albear@technowave-eg.com",
   "amohamed@technowave-eg.com",
   "asalah@technowave-eg.com"
+];
+
+export const HARDCODED_ADMINS = [
+  "albear@technowave-eg.com"
 ];
 
 export type Contact = {
@@ -58,6 +66,15 @@ function App() {
       console.error("Failed to sign out", e);
     }
   };
+
+  useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setActiveTab(customEvent.detail);
+    };
+    window.addEventListener('navigate-tab', handleNavigate);
+    return () => window.removeEventListener('navigate-tab', handleNavigate);
+  }, []);
 
   const handleExportCSV = () => {
     const headers = ["HOSPITAL NAME", "EMPLOYEE NAME", "POSITION", "MOBILE NUMBER", "EMAIL", "ADDED BY"];
@@ -162,6 +179,22 @@ function App() {
 
   const renderContent = () => {
     switch (activeTab) {
+      case "dashboard":
+        return <DashboardPage />;
+      case "targets":
+        return <TargetsPage />;
+      case "pipelines":
+        return <ForecastPage />;
+      case "pipelines_analysis":
+        return <PipelinesPage />;
+      case "orders":
+        return <PurchaseOrdersPage />;
+      case "invoices":
+        return <InvoicesPage />;
+      case "team":
+        return <SalesTeamPage />;
+      case "setup":
+        return <SetupPage />;
       case "contacts":
         return <ContactsView 
           data={filteredData} 
@@ -196,16 +229,19 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/20">
-      <SidebarNav 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
-        onAddClick={() => setShowAddForm(true)} 
-        onExportCSV={handleExportCSV}
-      />
-      
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <TopBar 
+    <ExchangeRatesProvider>
+      <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/20">
+        <SidebarNav 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+          onAddClick={() => setShowAddForm(true)} 
+          onExportCSV={handleExportCSV}
+        />
+        
+        <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+          <ExchangeRateBanner />
+          {activeTab === "contacts" && (
+          <TopBar 
           onAddClick={() => setShowAddForm(true)} 
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -216,9 +252,12 @@ function App() {
           onContactTabChange={setContactTab}
           flaggedCount={flaggedCount}
         />
+        )}
         
         <div className="flex-1 overflow-auto px-8 pb-8">
-          {renderContent()}
+          <CrmShell role={isAdmin ? "admin" : "sales"} adminEmail={currentUserEmail || ""}>
+            {renderContent()}
+          </CrmShell>
         </div>
 
         {/* Slide-over Form for Add or Edit */}
@@ -236,6 +275,7 @@ function App() {
         )}
       </main>
     </div>
+    </ExchangeRatesProvider>
   );
 }
 

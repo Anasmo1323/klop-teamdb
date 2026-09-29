@@ -4,7 +4,7 @@ import { Input } from "../ui/input";
 import { Hexagon } from "lucide-react";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase";
-import { HARDCODED_ADMINS } from "../../App";
+import { HARDCODED_ADMINS, ALLOWED_USERS } from "../../App";
 
 interface LoginViewProps {
   extraAdmins?: string[];
@@ -26,7 +26,7 @@ export function LoginView({ extraAdmins = [] }: LoginViewProps) {
     const emailLower = email.trim().toLowerCase();
 
     // 1. Check if the user is authorized to even attempt login
-    const isAuthorized = HARDCODED_ADMINS.includes(emailLower) || extraAdmins.includes(emailLower);
+    const isAuthorized = ALLOWED_USERS.includes(emailLower) || extraAdmins.includes(emailLower);
 
     if (!isAuthorized) {
       setError("Access Denied. You do not have permission to access this database.");
@@ -35,7 +35,7 @@ export function LoginView({ extraAdmins = [] }: LoginViewProps) {
     }
 
     // 2. Enforce unified password for hardcoded admins
-    if (HARDCODED_ADMINS.includes(emailLower) && password !== UNIFIED_PASSWORD) {
+    if (ALLOWED_USERS.includes(emailLower) && password !== UNIFIED_PASSWORD) {
       setError("Invalid credentials.");
       setIsLoading(false);
       return;
