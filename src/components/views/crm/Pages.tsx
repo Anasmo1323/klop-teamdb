@@ -994,8 +994,8 @@ export function TargetsPage() {
           accent="amber"
         />
       </div>
-      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
-        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
+        <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
 <DataTable editing={store.editing}>
           <thead>
 
@@ -1024,7 +1024,7 @@ export function TargetsPage() {
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
                   <td onDoubleClick={canEditTargets ? () => store.startEditingCell(`${row.id}-1`) : undefined}>
-                    <div className="font-semibold text-[#2b3a51]">
+                    <div style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>
                       {store.editingCell === `${row.id}-${1}` ? (
                         <EditableInput
                           value={productLine}
@@ -1038,7 +1038,7 @@ export function TargetsPage() {
                         productLine
                       )}
                     </div>
-                    <div className="text-[11px] text-[#a0abba]">{row.id}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{row.id}</div>
                   </td>
                   <td onDoubleClick={canEditTargets ? () => store.startEditingCell(`${row.id}-2`) : undefined}>
                     {store.editingCell === `${row.id}-${2}` ? (
@@ -1358,8 +1358,8 @@ export function ForecastPage() {
           accent="teal"
         />
       </div>
-      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
-        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
+        <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
         <DataTable editing={store.editing}>
           <thead>
             <tr>
@@ -1408,9 +1408,7 @@ export function ForecastPage() {
                       />
                     ) : (
                       <>
-                        <div dir="auto" style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>
-                          {row.client}
-                        </div>
+                        <div style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}><span dir="auto">{row.client}</span></div>
                         <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
                           {row.id}
                         </div>
@@ -1792,8 +1790,8 @@ export function PurchaseOrdersPage() {
           onCancel={() => setAdding(false)}
         />
       )}
-      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
-        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
+        <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
         <DataTable editing={store.editing}>
           <thead>
             <tr>
@@ -1815,7 +1813,7 @@ export function PurchaseOrdersPage() {
               );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
-                  <td className="font-semibold text-[#2b3a51]">{row.id}</td>
+                  <td style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>{row.id}</td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-2`)}>
                     {store.editingCell === `${row.id}-${2}` ? (
                       <EditableInput
@@ -2156,8 +2154,8 @@ export function InvoicesPage() {
           accent="rose"
         />
       </div>
-      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
-        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
+        <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
         <DataTable editing={store.editing}>
           <thead>
             <tr>
@@ -2187,7 +2185,7 @@ export function InvoicesPage() {
                 );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
-                  <td className="font-semibold text-[#2b3a51]">{row.id}</td>
+                  <td style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>{row.id}</td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-2`)}>
                     {store.editingCell === `${row.id}-${2}` ? (
                       <EditableInput
@@ -2649,7 +2647,7 @@ export function PipelinesPage() {
               );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
-                  <td className="font-semibold text-[#2b3a51]">{row.deal}</td>
+                  <td style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>{row.deal}</td>
                   <td>{row.client}</td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-3`)}>
                     {store.editingCell === `${row.id}-${3}` ? (
@@ -2835,8 +2833,8 @@ export function SalesTeamPage() {
           onCancel={() => setAdding(false)}
         />
       )}
-      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
-        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
+        <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
 <DataTable editing={store.editing}>
           <thead>
 
@@ -2866,7 +2864,7 @@ export function SalesTeamPage() {
                           .slice(0, 2)}
                       </div>
                       <div>
-                        <div className="font-semibold text-[#2b3a51]">
+                        <div style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>
                           {store.editingCell === `${row.id}-${1}` ? (
                             <EditableInput
                               value={row.rep}
@@ -2878,7 +2876,7 @@ export function SalesTeamPage() {
                             row.rep
                           )}
                         </div>
-                        <div className="text-[11px] text-[#a0abba]">
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
                           {row.id}
                         </div>
                       </div>
@@ -2927,7 +2925,7 @@ export function SalesTeamPage() {
                     ) : (
                       <>
                         <div>{row.email ?? "—"}</div>
-                        <div className="text-[11px] text-[#a0abba]">
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
                           {row.phone ?? "—"}
                         </div>
                       </>
