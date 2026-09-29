@@ -81,17 +81,38 @@ import { writeBatch, doc, setDoc, updateDoc, query, getDocs, where, collection }
 const chartTooltip = {
   contentStyle: {
     borderRadius: 12,
-    border: "1px solid #e7ebf2",
-    boxShadow: "0 8px 24px rgba(20, 33, 61, 0.08)",
+    border: "1px solid #E2E8F0",
+    boxShadow: "0 4px 12px rgba(15,31,61,0.08)",
     fontSize: 12,
+    color: "#334155",
+    background: "#FFFFFF",
   },
 };
 
 function PageFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="crm-app text-[#172033]">
-      <div className="crm-content">{children}</div>
+    <div style={{ color: "var(--text-body)", minHeight: "100%" }}>
+      <div className="px-8 pb-10">{children}</div>
     </div>
+  );
+}
+
+// Stage pill with dot — replaces plain StatusBadge for pipeline stages
+const stagePillMap: Record<string, string> = {
+  "Cold":          "badge badge-cold",
+  "Prospecting":   "badge badge-prospecting",
+  "Qualification": "badge badge-qualification",
+  "Proposal":      "badge badge-proposal",
+  "Closed Won":    "badge badge-closed-won",
+  "Closed Lost":   "badge badge-closed-lost",
+};
+function StagePill({ stage }: { stage: string }) {
+  const cls = stagePillMap[stage] ?? "badge badge-neutral";
+  return (
+    <span className={cls}>
+      <span className="badge-dot" />
+      {stage}
+    </span>
   );
 }
 
@@ -107,11 +128,20 @@ function ChartCard({
   className?: string;
 }) {
   return (
-    <section className={`crm-card ${className}`}>
-      <div className="crm-card-heading">
+    <section
+      className={className}
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-card)",
+        padding: "20px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
         <div>
-          <h2 className="crm-card-title">{title}</h2>
-          <p className="crm-card-subtitle">{subtitle}</p>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-heading)", margin: 0 }}>{title}</h2>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 3 }}>{subtitle}</p>
         </div>
         <button className="crm-more" aria-label={`More options for ${title}`}>
           <MoreHorizontal size={18} />
@@ -526,13 +556,21 @@ export function DashboardPage() {
 function DataTable({
   children,
   onDoubleClick,
+  editing,
 }: {
   children: ReactNode;
   onDoubleClick?: () => void;
+  editing?: boolean;
 }) {
   return (
-    <div className="crm-table-wrap" onDoubleClick={onDoubleClick}>
-      <table className="crm-table">{children}</table>
+    <div className={`ct-table-wrap${editing ? " ct-editing" : ""}`} onDoubleClick={onDoubleClick}>
+      {editing && (
+        <div className="ct-edit-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit mode — double-click any cell to edit. Hit Save changes when done.
+        </div>
+      )}
+      <table className="ct-table">{children}</table>
     </div>
   );
 }
@@ -571,26 +609,26 @@ function AddRecordPanel({
     onSubmit();
   };
   return (
-    <section className="crm-card crm-add-panel">
+    <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", padding: "20px", marginBottom: 16 }}>
       <div className="crm-card-heading">
         <div>
           <h2 className="crm-card-title">{title}</h2>
           <p className="crm-card-subtitle">{description}</p>
         </div>
-        <button type="button" className="crm-reset-button" onClick={onCancel}>
+        <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel
         </button>
       </div>
-      <form className="crm-add-form" onSubmit={submit}>
+      <form style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16, marginTop: 16 }} onSubmit={submit}>
         {fields.map((field) => (
-          <label key={field.name} className="crm-add-field">
+          <label key={field.name} style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, fontWeight: 500, color: "var(--text-body)" }}>
             <span>
               {field.label}
               {field.required ? " *" : ""}
             </span>
             {field.options ? (
               <select
-                className="crm-edit-select crm-add-select"
+                style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, background: "var(--surface)", width: "100%" }}
                 value={values[field.name] ?? ""}
                 required={field.required}
                 onChange={(event) => onChange(field.name, event.target.value)}
@@ -603,7 +641,7 @@ function AddRecordPanel({
               </select>
             ) : (
               <Input
-                className="crm-edit-input"
+                style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
                 type={field.type ?? "text"}
                 value={values[field.name] ?? ""}
                 placeholder={field.placeholder}
@@ -616,11 +654,11 @@ function AddRecordPanel({
             )}
           </label>
         ))}
-        <div className="crm-add-actions">
-          <Button type="submit" className="crm-primary-button">
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+          <Button type="submit" className="btn-blue">
             Add record
           </Button>
-          <span className="crm-add-hint">
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
             The new record will be appended and remain in edit mode until you
             save.
           </span>
@@ -657,7 +695,7 @@ function EditableInput({
 }) {
   return (
     <Input
-      className="crm-edit-input"
+      style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
       type={type}
       value={value}
       min={min}
@@ -708,7 +746,20 @@ function AdminBadge() {
   const { role } = useCrmAccess();
   if (role !== "admin") return null;
   return (
-    <span className="crm-admin-badge">
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        fontSize: 11,
+        fontWeight: 700,
+        background: "var(--primary-light)",
+        color: "var(--primary-text)",
+        border: "1px solid rgba(37,99,235,0.2)",
+        borderRadius: "var(--radius-pill)",
+        padding: "3px 8px",
+      }}
+    >
       <ShieldCheck size={12} /> Admin controls
     </span>
   );
@@ -719,11 +770,12 @@ function AdminDeleteButton({ onDelete }: { onDelete: () => void }) {
   if (role !== "admin") return null;
   return (
     <button
-      className="crm-delete-button"
+      className="btn-danger"
       aria-label="Delete row"
+      style={{ padding: "5px 8px", fontSize: 12 }}
       onClick={() => onDelete()}
     >
-      <Trash2 size={14} />
+      <Trash2 size={13} />
     </button>
   );
 }
@@ -755,7 +807,7 @@ function RouteTableHeader({
       action={
         action ?? (
           <div className="flex items-center gap-2">
-            <div className="crm-inline-search">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "0 10px" }}>
               <Search size={15} />
               <Input
                 value={search}
@@ -764,7 +816,7 @@ function RouteTableHeader({
               />
             </div>
             <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="crm-select w-[142px]">
+              <SelectTrigger style={{ height: 36, minWidth: 140, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13 }}>
                 <Filter size={14} />
                 <SelectValue />
               </SelectTrigger>
@@ -859,7 +911,7 @@ export function TargetsPage() {
           <div className="crm-report-actions">
             {canEditTargets && (
               <Button
-                className="crm-secondary-button"
+                className="btn-secondary"
                 onClick={() => setAdding(true)}
               >
                 + Add target
@@ -942,11 +994,9 @@ export function TargetsPage() {
           accent="amber"
         />
       </div>
-      <section className="crm-card">
-        <div className="crm-table-meta">
-          <AdminBadge />
-        </div>
-<DataTable>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
+        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+<DataTable editing={store.editing}>
           <thead>
 
 
@@ -1042,7 +1092,7 @@ export function TargetsPage() {
                           })
                         }
                       >
-                        <SelectTrigger className="crm-edit-select">
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1216,7 +1266,7 @@ export function ForecastPage() {
         action={
           <div className="crm-report-actions">
             <Button
-              className="crm-secondary-button"
+              className="btn-secondary"
               onClick={() => setAdding(true)}
             >
               + Add pipeline
@@ -1308,11 +1358,9 @@ export function ForecastPage() {
           accent="teal"
         />
       </div>
-      <section className="crm-card">
-        <div className="crm-table-meta">
-          <AdminBadge />
-        </div>
-        <DataTable>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
+        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+        <DataTable editing={store.editing}>
           <thead>
             <tr>
               <th>Code</th>
@@ -1360,10 +1408,10 @@ export function ForecastPage() {
                       />
                     ) : (
                       <>
-                        <div className="font-semibold text-[#2b3a51]">
+                        <div dir="auto" style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>
                           {row.client}
                         </div>
-                        <div className="text-[11px] text-[#a0abba]">
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
                           {row.id}
                         </div>
                       </>
@@ -1391,7 +1439,7 @@ export function ForecastPage() {
                           })
                         }
                       >
-                        <SelectTrigger className="crm-edit-select">
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1403,7 +1451,7 @@ export function ForecastPage() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <StatusBadge status={row.stage} />
+                      <StagePill stage={row.stage} />
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-5`)}>
@@ -1439,15 +1487,18 @@ export function ForecastPage() {
                         }
                       />
                     ) : (
-                      `${Math.round(row.margin * 100)}%`
+                      (() => {
+                        const pct = Math.round(row.margin * 100);
+                        const chipCls = pct >= 35 ? "badge badge-success" : pct >= 20 ? "badge badge-warning" : "badge badge-danger";
+                        return <span className={chipCls}>{pct}%</span>;
+                      })()
                     )}
                   </td>
-                  <td>{formatCurrency(row.amount * row.margin, false)}</td>
-                  <td>
-                    {formatCurrencyEGP(
-                      row.amount * row.margin * eurToEgp,
-                      false,
-                    )}
+                  <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "var(--text-heading)", fontSize: 13 }}>
+                    {formatCurrency(row.amount * row.margin, false)}
+                  </td>
+                  <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, color: "var(--text-muted)" }}>
+                    {formatCurrencyEGP(row.amount * row.margin * eurToEgp, false)}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-9`)}>
                     {store.editingCell === `${row.id}-${9}` ? (
@@ -1473,13 +1524,13 @@ export function ForecastPage() {
                         }
                       />
                     ) : (
-                      <span className="crm-next-action">{row.nextAction}</span>
+                      <span className="ct-next-action">{row.nextAction}</span>
                     )}
                   </td>
                   <td>
                     <div className="flex items-center justify-end gap-1">
                       {row.stage === "Closed Won" ? (
-                        <span className="h-8 w-8 flex items-center justify-center text-emerald-500 bg-emerald-50 rounded-md" title="Already converted">
+                        <span className="win-check-icon" title="Already converted to PO">
                           <Check size={16} strokeWidth={2.5} />
                         </span>
                       ) : (
@@ -1646,7 +1697,7 @@ export function PurchaseOrdersPage() {
         action={
           <div className="crm-report-actions">
             <Button
-              className="crm-secondary-button"
+              className="btn-secondary"
               onClick={() => setAdding(true)}
             >
               + Add purchase order
@@ -1741,11 +1792,9 @@ export function PurchaseOrdersPage() {
           onCancel={() => setAdding(false)}
         />
       )}
-      <section className="crm-card">
-        <div className="crm-table-meta">
-          <AdminBadge />
-        </div>
-        <DataTable>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
+        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+        <DataTable editing={store.editing}>
           <thead>
             <tr>
               <th>PO</th>
@@ -1816,7 +1865,7 @@ export function PurchaseOrdersPage() {
                           })
                         }
                       >
-                        <SelectTrigger className="crm-edit-select">
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1880,7 +1929,7 @@ export function PurchaseOrdersPage() {
                   <td>
                     <div className="flex items-center justify-end gap-1">
                       {row.status === "Delivered" ? (
-                        <span className="h-8 w-8 flex items-center justify-center text-emerald-500 bg-emerald-50 rounded-md" title="Already invoiced">
+                        <span className="win-check-icon" title="Already invoiced">
                           <Check size={16} strokeWidth={2.5} />
                         </span>
                       ) : (
@@ -2007,7 +2056,7 @@ export function InvoicesPage() {
         action={
           <div className="crm-report-actions">
             <Button
-              className="crm-secondary-button"
+              className="btn-secondary"
               onClick={() => setAdding(true)}
             >
               + Add invoice
@@ -2107,11 +2156,9 @@ export function InvoicesPage() {
           accent="rose"
         />
       </div>
-      <section className="crm-card">
-        <div className="crm-table-meta">
-          <AdminBadge />
-        </div>
-        <DataTable>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
+        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+        <DataTable editing={store.editing}>
           <thead>
             <tr>
               <th>Invoice</th>
@@ -2190,7 +2237,7 @@ export function InvoicesPage() {
                           })
                         }
                       >
-                        <SelectTrigger className="crm-edit-select">
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -2352,7 +2399,7 @@ export function PipelinesPage() {
         action={
           <div className="crm-report-actions">
             <Button
-              className="crm-secondary-button"
+              className="btn-secondary"
               onClick={() => setAdding(true)}
             >
               + Add pipeline
@@ -2584,7 +2631,7 @@ export function PipelinesPage() {
           </div>
           <AdminBadge />
         </div>
-        <DataTable>
+        <DataTable editing={store.editing}>
           <thead>
             <tr>
               <th>Deal</th>
@@ -2614,7 +2661,7 @@ export function PipelinesPage() {
                           })
                         }
                       >
-                        <SelectTrigger className="crm-edit-select">
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -2732,7 +2779,7 @@ export function SalesTeamPage() {
         description="Manage the 12-seat roster and keep setup placeholders visible until the team is fully staffed. Sales team members can add new records or correct entries in edit mode."
         action={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <div className="crm-inline-search">
+            <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "0 10px" }}>
               <Search size={15} />
               <Input
                 value={search}
@@ -2741,7 +2788,7 @@ export function SalesTeamPage() {
               />
             </div>
             <Button
-              className="crm-secondary-button"
+              className="btn-secondary"
               onClick={() => setAdding(true)}
             >
               + Add team member
@@ -2788,11 +2835,9 @@ export function SalesTeamPage() {
           onCancel={() => setAdding(false)}
         />
       )}
-      <section className="crm-card">
-        <div className="crm-table-meta">
-          <AdminBadge />
-        </div>
-<DataTable>
+      <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)" }}>
+        <div style={{ padding: "12px 16px 0", display: "flex", gap: 8 }}><AdminBadge /></div>
+<DataTable editing={store.editing}>
           <thead>
 
             <tr>
@@ -2898,7 +2943,7 @@ export function SalesTeamPage() {
                           })
                         }
                       >
-                        <SelectTrigger className="crm-edit-select">
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -3083,7 +3128,7 @@ export function SetupPage() {
             ))}
           </div>
           <div className="crm-admin-actions">
-            <Button className="crm-primary-button" onClick={saveLabels}>
+            <Button className="btn-blue" onClick={saveLabels}>
               Save structure names
             </Button>
             <Button className="crm-danger-button" onClick={resetEntireData}>
