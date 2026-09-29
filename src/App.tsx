@@ -10,7 +10,7 @@ import { ContactsView } from "./components/views/ContactsView";
 import { FilesView } from "./components/views/FilesView";
 import { SettingsView } from "./components/views/SettingsView";
 import { ExchangeRatesProvider } from "./contexts/ExchangeRatesContext";
-import { ExchangeRateBanner } from "./contexts/ExchangeRateBanner";
+import { GlobalTopBar } from "./contexts/GlobalTopBar";
 import { LoginView } from "./components/views/LoginView";
 import { DashboardPage, TargetsPage, ForecastPage, PipelinesPage, PurchaseOrdersPage, InvoicesPage, SalesTeamPage, SetupPage } from "./components/views/crm/Pages";
 import { CrmShell } from "./components/views/crm/CrmShell";
@@ -230,7 +230,7 @@ function App() {
 
   return (
     <ExchangeRatesProvider>
-      <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/20">
+      <div className="flex h-screen w-full overflow-hidden" style={{ background: "var(--background)" }}>
         <SidebarNav 
           activeTab={activeTab} 
           onTabChange={setActiveTab} 
@@ -239,7 +239,7 @@ function App() {
         />
         
         <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-          <ExchangeRateBanner />
+          <GlobalTopBar />
           {activeTab === "contacts" && (
           <TopBar 
           onAddClick={() => setShowAddForm(true)} 
@@ -254,7 +254,7 @@ function App() {
         />
         )}
         
-        <div className="flex-1 overflow-auto px-8 pb-8">
+        <div className="flex-1 overflow-auto" style={{ background: "var(--background)" }}>
           <CrmShell role={isAdmin ? "admin" : "sales"} adminEmail={currentUserEmail || ""}>
             {renderContent()}
           </CrmShell>

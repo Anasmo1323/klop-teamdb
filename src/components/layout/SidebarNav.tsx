@@ -1,15 +1,18 @@
-import { 
-  Users, 
-  FolderOpen, 
+import {
+  Users,
+  FolderOpen,
   Settings,
   LayoutDashboard,
   Target,
   SlidersHorizontal,
   ShoppingCart,
   ReceiptText,
-  UsersRound
+  UsersRound,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useState } from "react";
 
 interface SidebarNavProps {
   activeTab: string;
@@ -18,71 +21,130 @@ interface SidebarNavProps {
   onExportCSV?: () => void;
 }
 
-export function SidebarNav({ activeTab, onTabChange, onAddClick, onExportCSV }: SidebarNavProps) {
-  const topNav = [
-    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { id: "contacts", icon: Users, label: "Contacts" },
-    { id: "targets", icon: Target, label: "Targets" },
-    { id: "pipelines", icon: SlidersHorizontal, label: "Pipelines" },
-    { id: "orders", icon: ShoppingCart, label: "Purchase Orders" },
-    { id: "invoices", icon: ReceiptText, label: "Invoices" },
-    { id: "team", icon: UsersRound, label: "Sales Team" },
-    { id: "files", icon: FolderOpen, label: "Files" },
-  ];
+const topNav = [
+  { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { id: "contacts",  icon: Users,           label: "Contacts"  },
+  { id: "targets",   icon: Target,          label: "Targets"   },
+  { id: "pipelines", icon: SlidersHorizontal, label: "Pipelines" },
+  { id: "orders",    icon: ShoppingCart,    label: "Purchase Orders" },
+  { id: "invoices",  icon: ReceiptText,     label: "Invoices"  },
+  { id: "team",      icon: UsersRound,      label: "Sales Team" },
+  { id: "files",     icon: FolderOpen,      label: "Files"     },
+];
+
+export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="w-[72px] h-screen bg-white flex flex-col items-center py-6 shrink-0 border-r border-gray-200 z-20 shadow-[2px_0_8px_rgba(0,0,0,0.02)]">
+    <aside
+      className={cn(
+        "relative h-screen flex flex-col shrink-0 transition-all duration-300 ease-in-out no-print",
+        collapsed ? "w-[68px]" : "w-[228px]"
+      )}
+      style={{ background: "var(--sidebar-bg)" }}
+    >
+      {/* Logo / Wordmark */}
+      <div className="h-16 flex items-center px-4 border-b border-white/10 shrink-0 overflow-hidden">
+        {collapsed ? (
+          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-base mx-auto shrink-0">
+            K
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+              K
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-white font-bold text-sm leading-tight truncate">Klop</p>
+              <p className="text-slate-400 text-xs leading-tight truncate">TeamDB</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Collapse Toggle */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="absolute -right-3 top-[54px] z-10 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 transition-all"
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+      </button>
+
+      {/* Nav section label */}
+      {!collapsed && (
+        <div className="px-4 pt-5 pb-2">
+          <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">
+            Menu
+          </span>
+        </div>
+      )}
+
       {/* Main Nav */}
-      <nav className="flex-1 flex flex-col items-center gap-4 w-full">
+      <nav className={cn("flex-1 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden", collapsed ? "px-2 pt-4" : "px-3")}>
         {topNav.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+
           return (
             <button
               key={item.id}
-              onClick={() => {
-                if (item.id === "add") {
-                  onAddClick();
-                } else {
-                  onTabChange(item.id);
-                }
-              }}
+              onClick={() => onTabChange(item.id)}
+              title={collapsed ? item.label : undefined}
               className={cn(
-                "w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 group relative",
-                isActive 
-                  ? "bg-[#e6f4ff] text-[#1677ff]" 
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
+                collapsed ? "h-10 w-10 justify-center mx-auto" : "h-9 w-full px-3",
+                isActive
+                  ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.4)]"
+                  : "text-slate-400 hover:bg-white/8 hover:text-white"
               )}
-              aria-label={item.id}
+              style={!isActive ? undefined : undefined}
             >
-              <Icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2.5 : 2} />
-              
-              {/* Tooltip */}
-              <div className="absolute left-14 bg-white text-gray-800 text-xs px-2.5 py-1.5 rounded-md border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg font-medium">
-                {item.label}
-              </div>
+              <Icon
+                size={18}
+                strokeWidth={isActive ? 2.5 : 2}
+                className="shrink-0"
+              />
+              {!collapsed && (
+                <span className="truncate">{item.label}</span>
+              )}
+
+              {/* Tooltip when collapsed */}
+              {collapsed && (
+                <span className="pointer-events-none absolute left-12 px-2.5 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-50">
+                  {item.label}
+                </span>
+              )}
             </button>
           );
         })}
       </nav>
 
-      {/* Bottom Nav */}
-      <div className="flex flex-col items-center gap-4 w-full mt-auto">
-        <button 
+      {/* Divider */}
+      <div className="mx-4 border-t border-white/10 my-2" />
+
+      {/* Settings */}
+      <div className={cn("pb-4", collapsed ? "px-2" : "px-3")}>
+        <button
           onClick={() => onTabChange("settings")}
+          title={collapsed ? "Settings" : undefined}
           className={cn(
-            "w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 group relative",
+            "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
+            collapsed ? "h-10 w-10 justify-center mx-auto" : "h-9 w-full px-3",
             activeTab === "settings"
-              ? "bg-[#e6f4ff] text-[#1677ff]"
-              : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+              ? "bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.4)]"
+              : "text-slate-400 hover:bg-white/8 hover:text-white"
           )}
         >
-          <Settings className="w-[22px] h-[22px]" strokeWidth={activeTab === "settings" ? 2.5 : 2} />
-          <div className="absolute left-14 bg-white text-gray-800 text-xs px-2.5 py-1.5 rounded-md border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg font-medium">
-            Settings
-          </div>
+          <Settings size={18} strokeWidth={activeTab === "settings" ? 2.5 : 2} className="shrink-0" />
+          {!collapsed && <span className="truncate">Settings</span>}
+          {collapsed && (
+            <span className="pointer-events-none absolute left-12 px-2.5 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-50">
+              Settings
+            </span>
+          )}
         </button>
       </div>
-    </div>
+    </aside>
   );
 }
