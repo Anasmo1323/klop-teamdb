@@ -37,9 +37,9 @@ export function SectionHeader({
   description,
   action,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   action?: ReactNode;
 }) {
   return (
@@ -48,9 +48,9 @@ export function SectionHeader({
       style={{ borderRadius: "0" }}
     >
       <div>
-        <div className="page-eyebrow">{eyebrow}</div>
+        {eyebrow && <div className="page-eyebrow">{eyebrow}</div>}
         <h1 className="page-title">{title}</h1>
-        <p className="page-subtitle">{description}</p>
+        {description && <p className="page-subtitle">{description}</p>}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>

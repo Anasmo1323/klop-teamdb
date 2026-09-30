@@ -247,6 +247,13 @@ export function DashboardPage() {
   }, [pipelineStore.rows]);
 
   // 3. Commercial momentum — live from real deal close dates
+
+  const getGreeting = () => {
+    const hour = parseInt(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Africa/Cairo' }).format(new Date()));
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
   const liveMomentum = useMemo(() => {
     const now = new Date();
     return Array.from({ length: 9 }, (_, i) => {
@@ -277,9 +284,7 @@ export function DashboardPage() {
   return (
     <PageFrame>
       <SectionHeader
-        eyebrow="Operating snapshot · Sep 10, 2026"
-        title="Good morning, Albear."
-        description="A sharper view of target attainment, deal momentum, and cash invoices across the MedSales team."
+        title={`${getGreeting()}, Albear.`}
         action={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 border border-[#e5e8ea] rounded-md px-2 py-1.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all focus-within:border-[#1677ff] focus-within:ring-2 focus-within:ring-[#1677ff]/10">
@@ -670,7 +675,7 @@ function AddRecordPanel({
   onCancel,
 }: {
   title: string;
-  description: string;
+  description?: string;
   fields: AddField[];
   values: Record<string, string>;
   onChange: (name: string, value: string) => void;
@@ -686,7 +691,7 @@ function AddRecordPanel({
       <div className="crm-card-heading">
         <div>
           <h2 className="crm-card-title">{title}</h2>
-          <p className="crm-card-subtitle">{description}</p>
+          {description && <p className="crm-card-subtitle">{description}</p>}
         </div>
         <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel
@@ -864,7 +869,7 @@ function RouteTableHeader({
   action,
 }: {
   title: string;
-  description: string;
+  description?: string;
   search: string;
   setSearch: (value: string) => void;
   filter: string;
@@ -874,7 +879,6 @@ function RouteTableHeader({
 }) {
   return (
     <SectionHeader
-      eyebrow="Operational detail"
       title={title}
       description={description}
       action={
@@ -974,7 +978,6 @@ export function TargetsPage() {
     <PageFrame>
       <RouteTableHeader
         title="Sales targets"
-        description="Product-line targets and achievement tracking from the source CRM workbook. Sales users can review targets and reports; only the admin can add targets, edit Product Line, or change operational target values."
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -1016,7 +1019,6 @@ export function TargetsPage() {
       {adding && canEditTargets && (
         <AddRecordPanel
           title="Add target record"
-          description="Capture the product line and annual target values."
           fields={[
             { name: "productLine", label: "Product line", required: true },
             {
@@ -1328,7 +1330,6 @@ export function ForecastPage() {
     <PageFrame>
       <RouteTableHeader
         title="Sales Pipeline"
-        description="Deals, product lines, close timing, weighted value, and next actions in one operating view. Sales team members can add new records or correct entries in edit mode."
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -1375,7 +1376,6 @@ export function ForecastPage() {
       {adding && (
         <AddRecordPanel
           title="Add pipeline record"
-          description="Capture the opportunity, product line, commercial value, margin, timing, and next action."
           fields={[
             { name: "code", label: "Hospital Code", required: false },
             { name: "productLine", label: "Product line", required: true },
@@ -1751,7 +1751,6 @@ export function PurchaseOrdersPage() {
     <PageFrame>
       <RouteTableHeader
         title="Purchase orders"
-        description="Track orders from approval to delivery, with a clear owner and follow-up cue. Sales team members can add new records or correct entries in edit mode."
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -1817,7 +1816,6 @@ export function PurchaseOrdersPage() {
       {adding && (
         <AddRecordPanel
           title="Add purchase order"
-          description="Capture the commercial owner, value, delivery dates, and follow-up."
           fields={[
             { name: "client", label: "Client", required: true },
             { name: "rep", label: "Owner", required: true },
@@ -2116,7 +2114,6 @@ export function InvoicesPage() {
     <PageFrame>
       <RouteTableHeader
         title="Invoices"
-        description="See what has been issued, what has been collected, and where cash is at risk. Sales team members can add new records or correct entries in edit mode."
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -2160,7 +2157,6 @@ export function InvoicesPage() {
       {adding && (
         <AddRecordPanel
           title="Add invoice"
-          description="Capture the billing reference, amount, status, due dates, and invoice follow-up."
           fields={[
             { name: "client", label: "Client", required: true },
             { name: "po", label: "Purchase order" },
@@ -2462,9 +2458,7 @@ export function PipelinesPage() {
   return (
     <PageFrame>
       <SectionHeader
-        eyebrow="Analysis"
         title="Pipeline analysis"
-        description="A manager-ready view of stage health, coverage, and where opportunities are getting stuck. Sales team members can add new records or correct entries in edit mode."
         action={
           <div className="crm-report-actions">
             <Button
@@ -2498,7 +2492,6 @@ export function PipelinesPage() {
       {adding && (
         <AddRecordPanel
           title="Add pipeline record"
-          description="Capture the opportunity details that feed pipeline coverage and stage analysis."
           fields={[
             { name: "deal", label: "Deal name", required: true },
             { name: "client", label: "Client", required: true },
@@ -2843,9 +2836,7 @@ export function SalesTeamPage() {
   return (
     <PageFrame>
       <SectionHeader
-        eyebrow="People"
         title="Sales team"
-        description="Manage the 12-seat roster and keep setup placeholders visible until the team is fully staffed. Sales team members can add new records or correct entries in edit mode."
         action={
           <div className="flex flex-wrap items-center justify-end gap-2">
             <div style={{ display: "flex", alignItems: "center", gap: 8, height: 36, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "0 10px" }}>
@@ -2887,7 +2878,6 @@ export function SalesTeamPage() {
       {adding && (
         <AddRecordPanel
           title="Add sales-team member"
-          description="Capture the rep identity, territory, contact details, and focus area."
           fields={[
             { name: "rep", label: "Sales rep", required: true },
             { name: "region", label: "Region", required: true },
@@ -3099,9 +3089,7 @@ export function SetupPage() {
   return (
     <PageFrame>
       <SectionHeader
-        eyebrow="Governance"
         title="Lists & setup"
-        description="Visible lookup values and provenance notes carried over from the source workbook."
         action={
           <ReportToolbar
             title="Lists & setup"
