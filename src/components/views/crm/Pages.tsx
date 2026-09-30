@@ -302,19 +302,29 @@ export function DashboardPage() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 border border-[#e5e8ea] rounded-md px-2 py-1.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all focus-within:border-[#1677ff] focus-within:ring-2 focus-within:ring-[#1677ff]/10">
               <CalendarDays size={14} className="text-[#8b98aa]" />
-              <input 
-                type="date" 
-                value={dateRange.from}
-                onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                className="text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer" 
-              />
+              <div className="relative flex items-center h-full min-w-[75px] justify-center">
+                <span className="text-[12px] font-medium text-[#27354b] pointer-events-none whitespace-nowrap">
+                  {dateRange.from.split("-").reverse().join(" - ")}
+                </span>
+                <input 
+                  type="date" 
+                  value={dateRange.from}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                />
+              </div>
               <span className="text-[12px] font-bold text-[#a0abba] px-1">→</span>
-              <input 
-                type="date" 
-                value={dateRange.to}
-                onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                className="text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer" 
-              />
+              <div className="relative flex items-center h-full min-w-[75px] justify-center">
+                <span className="text-[12px] font-medium text-[#27354b] pointer-events-none whitespace-nowrap">
+                  {dateRange.to.split("-").reverse().join(" - ")}
+                </span>
+                <input 
+                  type="date" 
+                  value={dateRange.to}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                />
+              </div>
             </div>
             <ReportToolbar
               title="MedSales CRM dashboard"
