@@ -154,7 +154,16 @@ function ChartCard({
 
 export function DashboardPage() {
   const { adminEmail } = useCrmAccess();
-  const userName = adminEmail ? adminEmail.split('@')[0].charAt(0).toUpperCase() + adminEmail.split('@')[0].slice(1) : "Team";
+  const emailMap: Record<string, string> = {
+    "amohamed@technowave-eg.com": "Anas",
+    "albear@technowave-eg.com": "Albear",
+    "asalah@technowave-eg.com": "Abdelrahman",
+  };
+  const userName = adminEmail && emailMap[adminEmail.toLowerCase()] 
+    ? emailMap[adminEmail.toLowerCase()] 
+    : adminEmail 
+      ? adminEmail.split('@')[0].charAt(0).toUpperCase() + adminEmail.split('@')[0].slice(1) 
+      : "Team";
   const [dateRange, setDateRange] = useState({ from: "2026-01-01", to: "2026-12-31" });
   const targetStore = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
