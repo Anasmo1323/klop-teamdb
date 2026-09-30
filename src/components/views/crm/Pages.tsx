@@ -317,6 +317,9 @@ export function DashboardPage() {
                 onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, from: date ? toLocalISO(date) : "" }))}
                 dateFormat="dd-MM-yyyy"
                 placeholderText="Start Date"
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
               />
               <span className="text-[12px] font-bold text-[#a0abba] px-1">→</span>
@@ -325,6 +328,9 @@ export function DashboardPage() {
                 onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, to: date ? toLocalISO(date) : "" }))}
                 dateFormat="dd-MM-yyyy"
                 placeholderText="End Date"
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
               />
             </div>
