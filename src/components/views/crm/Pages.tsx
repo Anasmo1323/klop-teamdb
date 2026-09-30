@@ -153,6 +153,8 @@ function ChartCard({
 }
 
 export function DashboardPage() {
+  const { adminEmail } = useCrmAccess();
+  const userName = adminEmail ? adminEmail.split('@')[0].charAt(0).toUpperCase() + adminEmail.split('@')[0].slice(1) : "Team";
   const [dateRange, setDateRange] = useState({ from: "2026-01-01", to: "2026-12-31" });
   const targetStore = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
@@ -284,7 +286,7 @@ export function DashboardPage() {
   return (
     <PageFrame>
       <SectionHeader
-        title={`${getGreeting()}, Albear.`}
+        title={`${getGreeting()}, ${userName}.`}
         action={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 border border-[#e5e8ea] rounded-md px-2 py-1.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all focus-within:border-[#1677ff] focus-within:ring-2 focus-within:ring-[#1677ff]/10">
