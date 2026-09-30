@@ -56,6 +56,7 @@ function App() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [extraAdmins, setExtraAdmins] = useState<string[]>([]);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const isAdmin = currentUserEmail ? (HARDCODED_ADMINS.includes(currentUserEmail) || extraAdmins.includes(currentUserEmail)) : false;
 
@@ -224,8 +225,14 @@ function App() {
     );
   }
 
-  if (!currentUserEmail) {
-    return <LoginView extraAdmins={extraAdmins} />;
+  if (!currentUserEmail || isChangingPassword) {
+    return (
+      <LoginView 
+        extraAdmins={extraAdmins} 
+        onRequirePasswordChange={() => setIsChangingPassword(true)}
+        onPasswordChanged={() => setIsChangingPassword(false)}
+      />
+    );
   }
 
   return (

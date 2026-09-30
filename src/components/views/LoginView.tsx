@@ -15,11 +15,13 @@ const UNIFIED_PASSWORD = "!@#klop05072026";
 
 interface LoginViewProps {
   extraAdmins?: string[];
+  onRequirePasswordChange?: () => void;
+  onPasswordChanged?: () => void;
 }
 
 type AuthStep = "login" | "change-password" | "done";
 
-export function LoginView({ extraAdmins = [] }: LoginViewProps) {
+export function LoginView({ extraAdmins = [], onRequirePasswordChange, onPasswordChanged }: LoginViewProps) {
   const [step, setStep] = useState<AuthStep>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,6 +49,9 @@ export function LoginView({ extraAdmins = [] }: LoginViewProps) {
     }
 
     try {
+      if (password === UNIFIED_PASSWORD) {
+        onRequirePasswordChange?.();
+      }
       // Try to sign in with whatever password they typed
       await signInWithEmailAndPassword(auth, emailLower, password);
 
@@ -70,6 +75,9 @@ export function LoginView({ extraAdmins = [] }: LoginViewProps) {
         }
         // Auto-register with unified password, then force change
         try {
+          if (password === UNIFIED_PASSWORD) {
+            onRequirePasswordChange?.();
+          }
           await createUserWithEmailAndPassword(auth, emailLower, password);
           setStep("change-password");
         } catch (createErr: any) {
@@ -111,6 +119,7 @@ export function LoginView({ extraAdmins = [] }: LoginViewProps) {
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
       setStep("done");
+      onPasswordChanged?.();
       // App's onAuthStateChanged will now detect the signed-in user
     } catch (err: any) {
       setError("Could not update password: " + err.message);
