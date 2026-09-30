@@ -1,9 +1,31 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useExchangeRates } from "./ExchangeRatesContext";
-import { Search, User, TrendingUp } from "lucide-react";
+import { Search, User, TrendingUp, LogOut, Settings } from "lucide-react";
+import { auth } from "../firebase";
+import { signOut } from "firebase/auth";
 
 export function GlobalTopBar() {
   const { eurToEgp, usdToEgp, loading } = useExchangeRates();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error("Failed to sign out", e);
+    }
+  };
 
   return (
     <div
@@ -67,17 +89,49 @@ export function GlobalTopBar() {
         <div className="h-5 w-px bg-slate-200" />
 
         {/* User avatar */}
-        <button
-          className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all"
-          style={{
-            background: "var(--primary-light)",
-            color: "var(--primary-text)",
-            border: "1.5px solid rgba(37,99,235,0.2)",
-          }}
-          aria-label="User menu"
-        >
-          <User size={16} />
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all hover:opacity-80"
+            style={{
+              background: "var(--primary-light)",
+              color: "var(--primary-text)",
+              border: "1.5px solid rgba(37,99,235,0.2)",
+            }}
+            aria-label="User menu"
+          >
+            {auth.currentUser?.email ? auth.currentUser.email.charAt(0).toUpperCase() : <User size={16} />}
+          </button>
+
+          {showDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in zoom-in duration-200 origin-top-right">
+              <div className="px-4 py-2 border-b border-slate-100">
+                <p className="text-xs text-slate-500 truncate">Signed in as</p>
+                <p className="text-sm font-medium text-slate-900 truncate">
+                  {auth.currentUser?.email || "Unknown user"}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowDropdown(false);
+                  const event = new CustomEvent('navigate-tab', { detail: 'settings' });
+                  window.dispatchEvent(event);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+              >
+                <Settings size={14} />
+                Settings
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+              >
+                <LogOut size={14} />
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
