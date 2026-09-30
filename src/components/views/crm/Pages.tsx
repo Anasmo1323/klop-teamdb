@@ -162,6 +162,64 @@ const toLocalISO = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+
+export function useTableSort<T>(data: T[]) {
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+
+  const sortedData = useMemo(() => {
+    let sortableItems = [...data];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        let aVal = (a as any)[sortConfig.key];
+        let bVal = (b as any)[sortConfig.key];
+        
+        if (aVal == null) aVal = "";
+        if (bVal == null) bVal = "";
+
+        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [data, sortConfig]);
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc';
+    if (sortConfig && sortConfig.key === key) {
+      if (sortConfig.direction === 'asc') direction = 'desc';
+      else direction = null; // reset
+    }
+    setSortConfig(direction ? { key, direction } : null);
+  };
+
+  return { sortedData, sortConfig, requestSort };
+}
+
+export function SortableHeader({ label, sortKey, sortConfig, requestSort, className }: { label: string, sortKey?: string, sortConfig: any, requestSort: any, className?: string }) {
+  if (!sortKey) return <th className={className}>{label}</th>;
+  
+  const isActive = sortConfig?.key === sortKey;
+  return (
+    <th 
+      onClick={() => requestSort(sortKey)} 
+      className={`cursor-pointer select-none hover:bg-slate-50 transition-colors ${className || ''}`}
+      style={{ whiteSpace: 'nowrap' }}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        <span className="inline-flex flex-col text-[8px] leading-[0.5] opacity-40 ml-1">
+          <span className={isActive && sortConfig.direction === 'asc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>▲</span>
+          <span className={isActive && sortConfig.direction === 'desc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>▼</span>
+        </span>
+      </div>
+    </th>
+  );
+}
+
 export function DashboardPage() {
   const { adminEmail } = useCrmAccess();
   const emailMap: Record<string, string> = {
@@ -1005,6 +1063,7 @@ export function TargetsPage() {
     setAdding(false);
     toast.success("Target record added. Save changes to keep it.");
   };
+    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -1105,18 +1164,18 @@ export function TargetsPage() {
 <DataTable editing={store.editing}>
           <thead>
             <tr>
-              <th>Product Line</th>
+              <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
               <th>Target (€)</th>
               <th>Target (EGP)</th>
               <th>Achieved (€)</th>
               <th>Achieved (EGP)</th>
               <th>Progress</th>
-              <th>Status</th>
+              <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
               <th />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {sortedData.map((row) => {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
@@ -1357,6 +1416,7 @@ export function ForecastPage() {
     setAdding(false);
     toast.success("Pipeline record added. Save changes to keep it.");
   };
+    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -1465,21 +1525,21 @@ export function ForecastPage() {
         <DataTable editing={store.editing}>
           <thead>
             <tr>
-              <th>Code</th>
-              <th>Client</th>
-              <th>Product Line</th>
-              <th>Stage</th>
-              <th>Amount</th>
-              <th>Margin</th>
+              <SortableHeader label="Code" sortKey="code" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Client" sortKey="client" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Stage" sortKey="stage" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Amount" sortKey="amount" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Margin" sortKey="margin" sortConfig={sortConfig} requestSort={requestSort} />
               <th>Gross profit</th>
               <th>Gross profit (EGP)</th>
-              <th>Quotation date</th>
-              <th>Next action</th>
+              <SortableHeader label="Quotation date" sortKey="closeDate" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Next action" sortKey="nextAction" sortConfig={sortConfig} requestSort={requestSort} />
               <th />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {sortedData.map((row) => {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
@@ -1778,6 +1838,7 @@ export function PurchaseOrdersPage() {
     setAdding(false);
     toast.success("Purchase order added. Save changes to keep it.");
   };
+    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -1895,19 +1956,19 @@ export function PurchaseOrdersPage() {
         <DataTable editing={store.editing}>
           <thead>
             <tr>
-              <th>PO</th>
-              <th>Client</th>
-              <th>Owner</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Order date</th>
-              <th>Delivery date</th>
-              <th>Follow-up</th>
+              <SortableHeader label="PO" sortKey="id" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Client" sortKey="client" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Owner" sortKey="owner" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Amount" sortKey="amount" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Order date" sortKey="orderDate" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Delivery date" sortKey="deliveryDate" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Follow-up" sortKey="followUp" sortConfig={sortConfig} requestSort={requestSort} />
               <th />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {sortedData.map((row) => {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
@@ -2141,6 +2202,7 @@ export function InvoicesPage() {
     setAdding(false);
     toast.success("Invoice added. Save changes to keep it.");
   };
+    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -2257,19 +2319,19 @@ export function InvoicesPage() {
         <DataTable editing={store.editing}>
           <thead>
             <tr>
-              <th>Invoice</th>
-              <th>Client</th>
-              <th>PO</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Due date</th>
-              <th>Days overdue</th>
-              <th>Follow-up</th>
+              <SortableHeader label="Invoice" sortKey="id" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Client" sortKey="client" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="PO" sortKey="orderId" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Amount" sortKey="amount" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Due date" sortKey="dueDate" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Days overdue" sortKey="daysOverdue" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Follow-up" sortKey="followUp" sortConfig={sortConfig} requestSort={requestSort} />
               <th />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {sortedData.map((row) => {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
@@ -2416,6 +2478,7 @@ export function PipelinesPage() {
     nextAction: "",
   });
   const store = useEditableRows("medsales-forecast", deals);
+  const { sortedData, sortConfig, requestSort } = useTableSort(store.rows);
   const exportRows = store.rows.map((row) => [
     row.id,
     row.deal,
@@ -2727,16 +2790,16 @@ export function PipelinesPage() {
         <DataTable editing={store.editing}>
           <thead>
             <tr>
-              <th>Deal</th>
-              <th>Client</th>
-              <th>Stage</th>
-              <th>Amount</th>
-              <th>Next action</th>
+              <SortableHeader label="Deal" sortKey="deal" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Client" sortKey="client" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Stage" sortKey="stage" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Amount" sortKey="amount" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Next action" sortKey="nextAction" sortConfig={sortConfig} requestSort={requestSort} />
               <th />
             </tr>
           </thead>
           <tbody>
-            {store.rows.map((row) => {
+            {sortedData.map((row) => {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
@@ -2864,6 +2927,7 @@ export function SalesTeamPage() {
     setAdding(false);
     toast.success("Sales-team member added. Save changes to keep it.");
   };
+    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <SectionHeader
@@ -2930,16 +2994,16 @@ export function SalesTeamPage() {
 <DataTable editing={store.editing}>
           <thead>
             <tr>
-              <th>Rep</th>
-              <th>Region</th>
-              <th>Focus area</th>
-              <th>Contact</th>
-              <th>Status</th>
+              <SortableHeader label="Rep" sortKey="rep" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Region" sortKey="region" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Focus area" sortKey="focus" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Contact" sortKey="contact" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
               <th />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {sortedData.map((row) => {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
