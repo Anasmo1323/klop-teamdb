@@ -674,7 +674,7 @@ export const monthlyTrend = [
 ];
 
 export const attentionItems = [
-  { label: "Collections", value: `${formatCurrency(overdueExposure)} exposed`, detail: "2 invoices need follow-up", route: "/invoices", tone: "danger" as const },
+  { label: "Invoices", value: `${formatCurrency(overdueExposure)} exposed`, detail: "2 invoices need follow-up", route: "/invoices", tone: "danger" as const },
   { label: "Pipeline", value: `${activeDeals} active deals`, detail: "Next actions due this week", route: "/forecast", tone: "warning" as const },
   { label: "Targets", value: `${targets.filter((row) => row.status === "At Risk").length} reps at risk`, detail: "Coach before the next review", route: "/targets", tone: "info" as const },
 ];

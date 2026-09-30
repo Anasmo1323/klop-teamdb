@@ -189,7 +189,7 @@ export function DashboardPage() {
       `${dashboardActiveDeals} active deals`,
     ],
     ["Won deals", dashboardWeightedPipeline, "Probability-adjusted open value"],
-    ["Invoices & Collections", overdueExposure, "Sent + overdue exposure"],
+    ["Invoices", overdueExposure, "Sent + overdue exposure"],
   ];
 
   const handleSeed = async () => {
@@ -279,7 +279,7 @@ export function DashboardPage() {
       <SectionHeader
         eyebrow="Operating snapshot · Sep 10, 2026"
         title="Good morning, Albear."
-        description="A sharper view of target attainment, deal momentum, and cash collection across the MedSales team."
+        description="A sharper view of target attainment, deal momentum, and cash invoices across the MedSales team."
         action={
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 border border-[#e5e8ea] rounded-md px-2 py-1.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all focus-within:border-[#1677ff] focus-within:ring-2 focus-within:ring-[#1677ff]/10">
@@ -331,7 +331,7 @@ export function DashboardPage() {
           trend="+5.6%"
         />
         <StatCard
-          label="Invoices & Collections"
+          label="Invoices"
           value={formatCurrency(overdueExposure, true)}
           helper={`${invoices.filter((row) => row.status !== "Paid").length} invoices outside paid status`}
           accent="rose"
@@ -438,7 +438,7 @@ export function DashboardPage() {
         </ChartCard>
 
         <ChartCard
-          title="Collections mix"
+          title="Invoices mix"
           subtitle={`${formatCurrency(totalInvoiced)} invoiced across four records`}
         >
           <div className="crm-collection-chart">
@@ -510,7 +510,7 @@ export function DashboardPage() {
 
         <ChartCard
           title="Commercial momentum"
-          subtitle="Monthly movement across revenue, pipeline, and collections"
+          subtitle="Monthly movement across revenue, pipeline, and invoices"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={210}>
@@ -2115,7 +2115,7 @@ export function InvoicesPage() {
   return (
     <PageFrame>
       <RouteTableHeader
-        title="Invoices & collections"
+        title="Invoices"
         description="See what has been issued, what has been collected, and where cash is at risk. Sales team members can add new records or correct entries in edit mode."
         search={search}
         setSearch={setSearch}
@@ -2131,7 +2131,7 @@ export function InvoicesPage() {
               + Add invoice
             </Button>
             <ReportToolbar
-              title="Invoices & collections"
+              title="Invoices"
               headers={[
                 "Invoice",
                 "Client",
@@ -2160,7 +2160,7 @@ export function InvoicesPage() {
       {adding && (
         <AddRecordPanel
           title="Add invoice"
-          description="Capture the billing reference, amount, status, due dates, and collection follow-up."
+          description="Capture the billing reference, amount, status, due dates, and invoice follow-up."
           fields={[
             { name: "client", label: "Client", required: true },
             { name: "po", label: "Purchase order" },
