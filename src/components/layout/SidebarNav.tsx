@@ -45,11 +45,13 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
     >
       {/* Logo / Wordmark */}
       <div className="h-16 flex items-center justify-center px-4 border-b border-white/10 shrink-0 overflow-hidden">
-        <img 
-          src="/klop.png" 
-          alt="KLOP Database" 
-          className="w-full h-full object-contain py-2"
-        />
+        <div className="bg-white w-full h-10 rounded flex items-center justify-center p-1 shadow-sm transition-all">
+          <img 
+            src="/klop.png" 
+            alt="KLOP Database" 
+            className="w-full h-full object-contain"
+          />
+        </div>
       </div>
 
       {/* Collapse Toggle */}
