@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, useMemo, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   ArrowDownRight,
@@ -189,7 +189,7 @@ export function DashboardPage() {
       `${dashboardActiveDeals} active deals`,
     ],
     ["Won deals", dashboardWeightedPipeline, "Probability-adjusted open value"],
-    ["Collection exposure", overdueExposure, "Sent + overdue exposure"],
+    ["Invoices & Collections", overdueExposure, "Sent + overdue exposure"],
   ];
 
   const handleSeed = async () => {
@@ -211,6 +211,68 @@ export function DashboardPage() {
       alert("Error seeding data: " + e.message);
     }
   };
+
+  // ── Live chart data computed from firebase rows ────────────────────────────
+  // 1. Achievement by product line
+  const achievementByProductLine = useMemo(() => {
+    const lines: Record<string, { target: number; achieved: number }> = {};
+    targetStore.rows.forEach((row) => {
+      const line = row.productLine ?? row.focus ?? "Other";
+      if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
+      lines[line].target += row.target;
+    });
+    pipelineStore.rows
+      .filter((row) => row.stage === "Closed Won")
+      .forEach((row) => {
+        const line = row.productLine ?? row.product ?? "Other";
+        if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
+        lines[line].achieved += row.amount;
+      });
+    return Object.entries(lines).map(([line, v]) => ({
+      line,
+      target: v.target,
+      achieved: v.achieved,
+    }));
+  }, [targetStore.rows, pipelineStore.rows]);
+
+  // 2. Pipeline by stage — all stages including Closed Lost
+  const livePipelineByStage = useMemo(() => {
+    return stageOrder.map((stage) => ({
+      stage,
+      amount: pipelineStore.rows
+        .filter((row) => row.stage === stage)
+        .reduce((sum, row) => sum + row.amount, 0),
+      count: pipelineStore.rows.filter((row) => row.stage === stage).length,
+    }));
+  }, [pipelineStore.rows]);
+
+  // 3. Commercial momentum — live from real deal close dates
+  const liveMomentum = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 9 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 8 + i, 1);
+      const yr = d.getFullYear();
+      const mo = d.getMonth();
+      const label = d.toLocaleString("en-US", { month: "short" });
+      const wonDeals = pipelineStore.rows.filter((row) => {
+        if (row.stage !== "Closed Won" || !row.closeDate) return false;
+        const cd = new Date(row.closeDate);
+        return cd.getFullYear() === yr && cd.getMonth() === mo;
+      });
+      const openDeals = pipelineStore.rows.filter((row) => {
+        if (["Closed Won", "Closed Lost"].includes(row.stage)) return false;
+        if (!row.closeDate) return true;
+        const cd = new Date(row.closeDate);
+        return cd.getFullYear() === yr && cd.getMonth() === mo;
+      });
+      return {
+        month: label,
+        achieved: wonDeals.reduce((s, r) => s + r.amount, 0),
+        pipeline: openDeals.reduce((s, r) => s + r.amount, 0),
+        collected: wonDeals.reduce((s, r) => s + r.amount * r.margin, 0),
+      };
+    });
+  }, [pipelineStore.rows]);
 
   return (
     <PageFrame>
@@ -269,7 +331,7 @@ export function DashboardPage() {
           trend="+5.6%"
         />
         <StatCard
-          label="Collection exposure"
+          label="Invoices & Collections"
           value={formatCurrency(overdueExposure, true)}
           helper={`${invoices.filter((row) => row.status !== "Paid").length} invoices outside paid status`}
           accent="rose"
@@ -279,19 +341,19 @@ export function DashboardPage() {
 
       <div className="crm-dashboard-grid">
         <ChartCard
-          title="Achievement by rep"
-          subtitle="Revenue delivered against target · EUR"
+          title="Achievement by product line"
+          subtitle="Won deals vs target per product line · EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
               <BarChart
-                data={achievementByRep}
+                data={achievementByProductLine}
                 margin={{ top: 12, right: 16, left: -12, bottom: 0 }}
                 barGap={8}
               >
                 <CartesianGrid vertical={false} stroke="#edf0f5" />
                 <XAxis
-                  dataKey="rep"
+                  dataKey="line"
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
@@ -331,12 +393,12 @@ export function DashboardPage() {
 
         <ChartCard
           title="Pipeline by stage"
-          subtitle="Open and weighted value · EUR"
+          subtitle="Deal count and total value per stage · EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
               <BarChart
-                data={pipelineByStage.filter((row) => row.amount > 0)}
+                data={livePipelineByStage}
                 layout="vertical"
                 margin={{ top: 8, right: 18, left: 18, bottom: 0 }}
               >
@@ -360,14 +422,15 @@ export function DashboardPage() {
                 />
                 <Tooltip
                   {...chartTooltip}
-                  formatter={(value: any) => formatCurrency(Number(value ?? 0))}
+                  formatter={(value: any, name: any, props: any) => [
+                    `${formatCurrency(Number(value ?? 0))} (${props.payload.count} deal${props.payload.count !== 1 ? 's' : ''})`,
+                    "Value",
+                  ]}
                 />
                 <Bar dataKey="amount" name="Pipeline" radius={[0, 5, 5, 0]}>
-                  {pipelineByStage
-                    .filter((row) => row.amount > 0)
-                    .map((entry) => (
-                      <Cell key={entry.stage} fill={stageColors[entry.stage]} />
-                    ))}
+                  {livePipelineByStage.map((entry) => (
+                    <Cell key={entry.stage} fill={stageColors[entry.stage]} />
+                  ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -389,16 +452,18 @@ export function DashboardPage() {
                   outerRadius={82}
                   paddingAngle={4}
                 >
-                  {collectionsByStatus.map((entry) => (
+                  {collectionsByStatus.map((entry: { status: "Paid" | "Sent" | "Overdue" | "Draft"; amount: number; count: number }) => (
                     <Cell
                       key={entry.status}
                       fill={
-                        {
-                          Paid: "#2a9d8f",
-                          Sent: "#5b6b8c",
-                          Overdue: "#d86c75",
-                          Draft: "#dfe5ee",
-                        }[entry.status]
+                        (
+                          {
+                            Paid: "#2a9d8f",
+                            Sent: "#5b6b8c",
+                            Overdue: "#d86c75",
+                            Draft: "#dfe5ee",
+                          } as Record<string, string>
+                        )[entry.status]
                       }
                     />
                   ))}
@@ -450,7 +515,7 @@ export function DashboardPage() {
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={210}>
               <ComposedChart
-                data={monthlyTrend}
+                data={liveMomentum}
                 margin={{ top: 12, right: 8, left: -12, bottom: 0 }}
               >
                 <defs>
@@ -476,11 +541,19 @@ export function DashboardPage() {
                 />
                 <Tooltip
                   {...chartTooltip}
-                  formatter={(value: any) => formatCurrency(Number(value ?? 0))}
+                  labelFormatter={(label) => `Month: ${label}`}
+                  formatter={(value: any, name: any) => [
+                    formatCurrency(Number(value ?? 0)),
+                    name,
+                  ]}
+                />
+                <Legend
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: 11, color: "#6e7c92" }}
                 />
                 <Area
                   type="monotone"
-                  name="Achieved"
+                  name="Won Revenue"
                   dataKey="achieved"
                   stroke="#2a9d8f"
                   fill="url(#revenueFill)"
@@ -488,7 +561,7 @@ export function DashboardPage() {
                 />
                 <Line
                   type="monotone"
-                  name="Collected"
+                  name="Gross Profit"
                   dataKey="collected"
                   stroke="#f4a261"
                   strokeWidth={2.5}
@@ -496,7 +569,7 @@ export function DashboardPage() {
                 />
                 <Line
                   type="monotone"
-                  name="Pipeline"
+                  name="Open Pipeline"
                   dataKey="pipeline"
                   stroke="#5b6b8c"
                   strokeWidth={2}
@@ -998,8 +1071,6 @@ export function TargetsPage() {
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
 <DataTable editing={store.editing}>
           <thead>
-
-
             <tr>
               <th>Product Line</th>
               <th>Target (€)</th>
@@ -2837,7 +2908,6 @@ export function SalesTeamPage() {
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
 <DataTable editing={store.editing}>
           <thead>
-
             <tr>
               <th>Rep</th>
               <th>Region</th>

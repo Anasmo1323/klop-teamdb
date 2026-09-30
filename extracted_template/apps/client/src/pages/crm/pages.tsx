@@ -107,7 +107,7 @@ export function DashboardPage() {
     ["Revenue achieved", dashboardAchieved, `${Math.round(dashboardAttainment * 100)}% attainment`],
     ["Open pipeline", dashboardOpenPipeline, `${dashboardActiveDeals} active deals`],
     ["Won deals", dashboardWeightedPipeline, "Probability-adjusted open value"],
-    ["Collection exposure", overdueExposure, "Sent + overdue exposure"],
+    ["Invoices & Collections", overdueExposure, "Sent + overdue exposure"],
   ];
 
   return (
@@ -132,7 +132,7 @@ export function DashboardPage() {
         <StatCard label="Revenue achieved" value={formatCurrency(dashboardAchieved, true)} helper={`${Math.round(dashboardAttainment * 100)}% of ${formatCurrency(dashboardTargetTotal, true)} target`} accent="teal" trend="+12.4%" />
         <StatCard label="Open pipeline" value={formatCurrency(dashboardOpenPipeline, true)} helper={`${dashboardActiveDeals} active deals with value`} accent="navy" trend="+8.1%" />
         <StatCard label="Won deals" value={formatCurrency(dashboardWeightedPipeline, true)} helper="Probability-adjusted open value" accent="amber" trend="+5.6%" />
-        <StatCard label="Collection exposure" value={formatCurrency(overdueExposure, true)} helper={`${invoices.filter((row) => row.status !== "Paid").length} invoices outside paid status`} accent="rose" trend="-4.2%" />
+        <StatCard label="Invoices & Collections" value={formatCurrency(overdueExposure, true)} helper={`${invoices.filter((row) => row.status !== "Paid").length} invoices outside paid status`} accent="rose" trend="-4.2%" />
       </div>
 
       <div className="crm-dashboard-grid">
