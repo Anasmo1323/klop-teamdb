@@ -46,17 +46,13 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
       {/* Logo / Wordmark */}
       <div className="h-16 flex items-center px-4 border-b border-white/10 shrink-0 overflow-hidden">
         {collapsed ? (
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-base mx-auto shrink-0">
-            K
-          </div>
+          <img src="/klop.png" alt="KLOP" className="w-9 h-9 object-contain mx-auto shrink-0" />
         ) : (
           <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-              K
-            </div>
+            <img src="/klop.png" alt="KLOP" className="w-8 h-8 object-contain shrink-0" />
             <div className="overflow-hidden">
-              <p className="text-white font-bold text-sm leading-tight truncate">Klop</p>
-              <p className="text-slate-400 text-xs leading-tight truncate">TeamDB</p>
+              <p className="text-white font-bold text-sm leading-tight truncate">KLOP</p>
+              <p className="text-slate-400 text-xs leading-tight truncate">Database</p>
             </div>
           </div>
         )}
