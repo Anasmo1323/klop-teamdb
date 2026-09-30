@@ -19,6 +19,24 @@ export function GlobalTopBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "contacts" }));
+        setTimeout(() => window.dispatchEvent(new CustomEvent("focus-search")), 100);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleSearchClick = () => {
+    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "contacts" }));
+    setTimeout(() => window.dispatchEvent(new CustomEvent("focus-search")), 100);
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -74,6 +92,7 @@ export function GlobalTopBar() {
         {/* Global Search Trigger (decorative for now, Cmd+K) */}
         <button
           className="hidden sm:flex items-center gap-2 text-sm text-slate-400 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 h-8 transition-colors group"
+          onClick={handleSearchClick}
           aria-label="Search CRM (Ctrl+K)"
         >
           <Search size={14} className="text-slate-400" />

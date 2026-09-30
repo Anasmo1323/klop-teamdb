@@ -29,6 +29,20 @@ export function TopBar({ onAddClick, searchQuery, onSearchChange, onExportCSV, f
     }
   }, [isSearchOpen]);
 
+  
+  useEffect(() => {
+    const handleFocusSearch = () => {
+      setIsSearchOpen(true);
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, 50);
+    };
+    window.addEventListener("focus-search", handleFocusSearch as EventListener);
+    return () => window.removeEventListener("focus-search", handleFocusSearch as EventListener);
+  }, []);
+
   return (
     <div className="w-full pt-8 pb-6 px-8 flex flex-col gap-6 relative">
       {/* Row 1: Header & Actions */}

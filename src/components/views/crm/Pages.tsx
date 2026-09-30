@@ -165,25 +165,29 @@ export function DashboardPage() {
       ? adminEmail.split('@')[0].charAt(0).toUpperCase() + adminEmail.split('@')[0].slice(1) 
       : "Team";
   const [dateRange, setDateRange] = useState({ from: "2026-01-01", to: "2026-12-31" });
-  const targetStore = useEditableRows("medsales-targets", targets);
+    const targetStore = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
+
+  const filteredDeals = useMemo(() => {
+    return pipelineStore.rows.filter(row => {
+      if (!row.closeDate) return true;
+      return row.closeDate >= dateRange.from && row.closeDate <= dateRange.to;
+    });
+  }, [pipelineStore.rows, dateRange]);
   const dashboardTargetTotal = targetStore.rows.reduce(
     (sum, row) => sum + row.target,
     0,
   );
-  const dashboardAchieved = pipelineStore.rows
-    .filter((row) => row.stage === "Closed Won")
+  const dashboardAchieved = filteredDeals.filter((row) => row.stage === "Closed Won")
     .reduce((sum, row) => sum + row.amount, 0);
   const dashboardAttainment = dashboardTargetTotal
     ? dashboardAchieved / dashboardTargetTotal
     : 0;
-  const dashboardOpenPipeline = pipelineStore.rows
-    .filter((row) => !["Closed Won", "Closed Lost"].includes(row.stage))
+  const dashboardOpenPipeline = filteredDeals.filter((row) => !["Closed Won", "Closed Lost"].includes(row.stage))
     .reduce((sum, row) => sum + row.amount, 0);
-  const dashboardWeightedPipeline = pipelineStore.rows
-    .filter((row) => !["Closed Won", "Closed Lost"].includes(row.stage))
+  const dashboardWeightedPipeline = filteredDeals.filter((row) => !["Closed Won", "Closed Lost"].includes(row.stage))
     .reduce((sum, row) => sum + row.amount * row.margin, 0);
-  const dashboardActiveDeals = pipelineStore.rows.filter(
+  const dashboardActiveDeals = filteredDeals.filter(
     (row) =>
       !["Closed Won", "Closed Lost"].includes(row.stage) && row.amount > 0,
   ).length;
@@ -232,8 +236,7 @@ export function DashboardPage() {
       if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
       lines[line].target += row.target;
     });
-    pipelineStore.rows
-      .filter((row) => row.stage === "Closed Won")
+    filteredDeals.filter((row) => row.stage === "Closed Won")
       .forEach((row) => {
         const line = row.productLine ?? row.product ?? "Other";
         if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
@@ -250,10 +253,9 @@ export function DashboardPage() {
   const livePipelineByStage = useMemo(() => {
     return stageOrder.map((stage) => ({
       stage,
-      amount: pipelineStore.rows
-        .filter((row) => row.stage === stage)
+      amount: filteredDeals.filter((row) => row.stage === stage)
         .reduce((sum, row) => sum + row.amount, 0),
-      count: pipelineStore.rows.filter((row) => row.stage === stage).length,
+      count: filteredDeals.filter((row) => row.stage === stage).length,
     }));
   }, [pipelineStore.rows]);
 
@@ -272,12 +274,12 @@ export function DashboardPage() {
       const yr = d.getFullYear();
       const mo = d.getMonth();
       const label = d.toLocaleString("en-US", { month: "short" });
-      const wonDeals = pipelineStore.rows.filter((row) => {
+      const wonDeals = filteredDeals.filter((row) => {
         if (row.stage !== "Closed Won" || !row.closeDate) return false;
         const cd = new Date(row.closeDate);
         return cd.getFullYear() === yr && cd.getMonth() === mo;
       });
-      const openDeals = pipelineStore.rows.filter((row) => {
+      const openDeals = filteredDeals.filter((row) => {
         if (["Closed Won", "Closed Lost"].includes(row.stage)) return false;
         if (!row.closeDate) return true;
         const cd = new Date(row.closeDate);
