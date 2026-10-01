@@ -3420,6 +3420,8 @@ export function UpaContractsPage() {
     "Delivered and Payment Received",
   ];
 
+  const upaSuppliers = ["KLS Martin", "Braun", "Medtronic", "Stryker", "Zimmer Biomet", "Other"];
+
   const totalContractValue = store.rows.reduce((s, r) => s + r.contractValue, 0);
   const totalCommission = store.rows.reduce((s, r) => s + r.commissionValue, 0);
   const paidRows = store.rows.filter(r => r.status === "Delivered and Payment Received");
@@ -3529,7 +3531,14 @@ export function UpaContractsPage() {
             </label>
             <label className="crm-field">
               <span>Supplier</span>
-              <Input value={draft.supplier} onChange={(e) => setDraft(p => ({ ...p, supplier: e.target.value }))} placeholder="Supplier" />
+              <Select value={draft.supplier} onValueChange={(v) => setDraft(p => ({ ...p, supplier: v }))}>
+                <SelectTrigger style={{ height: 36, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {upaSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </label>
             <label className="crm-field">
               <span>Contract value (EUR)</span>
@@ -3594,9 +3603,14 @@ export function UpaContractsPage() {
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-supp`)}>
                     {store.editingCell === `${row.id}-supp` ? (
-                      <Input autoFocus value={row.supplier}
-                        onChange={(e) => store.updateRow(originalIndex, { supplier: e.target.value })}
-                        onBlur={() => store.startEditingCell("")} style={{ height: 28, fontSize: 13 }} />
+                      <Select value={row.supplier} onValueChange={(v) => { store.updateRow(originalIndex, { supplier: v }); store.startEditingCell(""); }}>
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {upaSuppliers.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     ) : row.supplier}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-cv`)}>
