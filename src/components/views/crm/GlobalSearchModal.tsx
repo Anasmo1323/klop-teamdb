@@ -69,7 +69,7 @@ export function GlobalSearchModal({ open, onClose }: { open: boolean, onClose: (
 
     // Search contacts
     dataCache.contacts.forEach((c: any) => {
-      if (`${c.name} ${c.hospital} ${c.position} ${c.phone}`.toLowerCase().includes(q)) {
+      if (`${c.name} ${c.hospital} ${c.position} ${c.phone} ${c.id}`.toLowerCase().includes(q)) {
         hits.push({
           id: c.id, type: "Contact", title: c.name || "Unknown", subtitle: c.hospital || "", tab: "contacts",
           icon: <Users size={14} className="text-blue-500" />
@@ -79,7 +79,7 @@ export function GlobalSearchModal({ open, onClose }: { open: boolean, onClose: (
 
     // Search forecast (pipeline)
     dataCache.forecast.forEach((f: any) => {
-      if (`${f.client} ${f.productLine} ${f.product} ${f.deal}`.toLowerCase().includes(q)) {
+      if (`${f.client} ${f.productLine} ${f.product} ${f.deal} ${f.code} ${f.id}`.toLowerCase().includes(q)) {
         hits.push({
           id: f.id, type: "Pipeline", title: f.client || "Unknown", subtitle: f.product || "", tab: "pipelines",
           icon: <Briefcase size={14} className="text-indigo-500" />
@@ -89,7 +89,7 @@ export function GlobalSearchModal({ open, onClose }: { open: boolean, onClose: (
 
     // Search targets
     dataCache.targets.forEach((t: any) => {
-      if (`${t.rep} ${t.region} ${t.focus} ${t.productLine}`.toLowerCase().includes(q)) {
+      if (`${t.rep} ${t.region} ${t.focus} ${t.productLine} ${t.id}`.toLowerCase().includes(q)) {
         hits.push({
           id: t.id, type: "Target", title: t.rep || "Unknown", subtitle: t.focus || "", tab: "targets",
           icon: <Target size={14} className="text-red-500" />
@@ -99,7 +99,7 @@ export function GlobalSearchModal({ open, onClose }: { open: boolean, onClose: (
 
     // Search POs
     dataCache.pos.forEach((p: any) => {
-      if (`${p.client} ${p.code}`.toLowerCase().includes(q)) {
+      if (`${p.client} ${p.code} ${p.id}`.toLowerCase().includes(q)) {
         hits.push({
           id: p.id, type: "PO", title: p.client || "Unknown", subtitle: `PO: ${p.code || p.id}`, tab: "orders",
           icon: <FileText size={14} className="text-amber-500" />
@@ -109,7 +109,7 @@ export function GlobalSearchModal({ open, onClose }: { open: boolean, onClose: (
 
     // Search Invoices
     dataCache.invoices.forEach((i: any) => {
-      if (`${i.client} ${i.code} ${i.po}`.toLowerCase().includes(q)) {
+      if (`${i.client} ${i.code} ${i.po} ${i.id}`.toLowerCase().includes(q)) {
         hits.push({
           id: i.id, type: "Invoice", title: i.client || "Unknown", subtitle: `INV: ${i.code || i.id}`, tab: "invoices",
           icon: <Receipt size={14} className="text-green-500" />
