@@ -1,13 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useExchangeRates } from "./ExchangeRatesContext";
-import { Search, User, TrendingUp, LogOut, Settings } from "lucide-react";
+import { Search, User, TrendingUp, LogOut, Settings, Check, X } from "lucide-react";
 import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { toast } from "sonner";
 
 export function GlobalTopBar() {
-  const { eurToEgp, usdToEgp, loading } = useExchangeRates();
+  const { eurToEgp, usdToEgp, loading, isCustom, updateCustomRates } = useExchangeRates();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [isEditingRates, setIsEditingRates] = useState(false);
+  const [editEur, setEditEur] = useState("");
+  const [editUsd, setEditUsd] = useState("");
+  const [isSavingRates, setIsSavingRates] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -45,6 +53,33 @@ export function GlobalTopBar() {
     }
   };
 
+  const handleDoubleClickRates = () => {
+    setEditEur(eurToEgp.toFixed(4));
+    setEditUsd(usdToEgp.toFixed(4));
+    setIsEditingRates(true);
+  };
+
+  const handleSaveRates = async () => {
+    const eur = parseFloat(editEur);
+    const usd = parseFloat(editUsd);
+    
+    if (!isNaN(eur) && !isNaN(usd) && eur > 0 && usd > 0) {
+      setIsSavingRates(true);
+      try {
+        await updateCustomRates(usd, eur);
+        setIsEditingRates(false);
+        toast.success("Exchange rates updated successfully");
+      } catch (error: any) {
+        console.error("Failed to save rates:", error);
+        toast.error("Failed to save rates: " + (error.message || "Unknown error"));
+      } finally {
+        setIsSavingRates(false);
+      }
+    } else {
+      toast.error("Please enter valid numbers greater than 0");
+    }
+  };
+
   return (
     <div
       className="h-14 flex items-center justify-between px-6 shrink-0 no-print"
@@ -55,7 +90,11 @@ export function GlobalTopBar() {
       }}
     >
       {/* LEFT: Exchange rate ticker chips */}
-      <div className="flex items-center gap-2.5">
+      <div 
+        className="flex items-center gap-2.5 select-none transition-colors"
+        onDoubleClick={!isEditingRates ? handleDoubleClickRates : undefined}
+        title={!isEditingRates ? "Double-click to manually set exchange rates" : undefined}
+      >
         {loading ? (
           <>
             <div className="skeleton h-7 w-32 rounded-full" />
@@ -63,26 +102,66 @@ export function GlobalTopBar() {
           </>
         ) : (
           <>
-            <TickerChip
-              flag="🇪🇺"
-              label="EUR"
-              value={`${eurToEgp.toFixed(2)} EGP`}
-              color="blue"
-            />
-            <TickerChip
-              flag="🇺🇸"
-              label="USD"
-              value={`${usdToEgp.toFixed(2)} EGP`}
-              color="teal"
-            />
-            {/* Live indicator */}
-            <div className="flex items-center gap-1.5 ml-1">
-              <span
-                className="inline-block w-1.5 h-1.5 rounded-full bg-green-500"
-                style={{ animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite" }}
-              />
-              <span className="text-xs text-slate-400 font-medium">Live</span>
-            </div>
+            {isEditingRates ? (
+              <div className="flex items-center gap-2 bg-blue-50/50 px-3 h-9 rounded-full border border-blue-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🇪🇺</span>
+                  <span className="text-xs font-semibold text-blue-900">1 EUR =</span>
+                  <Input 
+                    type="number"
+                    value={editEur} 
+                    onChange={(e) => setEditEur(e.target.value)}
+                    className="h-6 w-20 px-1.5 text-xs font-bold bg-white text-blue-900 border-blue-200"
+                    step="0.0001"
+                  />
+                </div>
+                <div className="w-px h-4 bg-blue-200 mx-1"></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🇺🇸</span>
+                  <span className="text-xs font-semibold text-blue-900">1 USD =</span>
+                  <Input 
+                    type="number"
+                    value={editUsd} 
+                    onChange={(e) => setEditUsd(e.target.value)}
+                    className="h-6 w-20 px-1.5 text-xs font-bold bg-white text-blue-900 border-blue-200"
+                    step="0.0001"
+                  />
+                </div>
+                <div className="flex items-center gap-1 ml-2 border-l border-blue-200 pl-2">
+                  <Button size="icon" variant="ghost" className="h-6 w-6 text-green-600 hover:text-green-700 hover:bg-green-100" onClick={handleSaveRates} disabled={isSavingRates}>
+                    <Check className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-100" onClick={() => setIsEditingRates(false)} disabled={isSavingRates}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <TickerChip
+                  flag="🇪🇺"
+                  label="EUR"
+                  value={`${eurToEgp.toFixed(4)} EGP`}
+                  color="blue"
+                />
+                <TickerChip
+                  flag="🇺🇸"
+                  label="USD"
+                  value={`${usdToEgp.toFixed(4)} EGP`}
+                  color="teal"
+                />
+                {/* Live indicator */}
+                <div className="flex items-center gap-1.5 ml-1">
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full ${isCustom ? 'bg-orange-500' : 'bg-green-500'}`}
+                    style={{ animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite" }}
+                  />
+                  <span className="text-xs text-slate-400 font-medium">
+                    {isCustom ? 'Manual Override' : 'Live'}
+                  </span>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
