@@ -55,7 +55,6 @@ import { useFirebaseRows as useEditableRows } from "@/hooks/useFirebaseRows";
 import { useHighlightRow } from "@/hooks/useHighlightRow";
 import {
   achievementByRep,
-  attentionItems,
   collectionsByStatus,
   deals,
   formatCurrency,
@@ -272,7 +271,6 @@ export function DashboardPage() {
   const dashboardOverdueExposure = invoiceStore.rows
     .filter((row) => row.status === "Overdue" || row.status === "Sent")
     .reduce((sum, row) => sum + row.amount, 0);
-  const topAttention = attentionItems;
   const dashboardExportRows = [
     [
       "Revenue achieved",
@@ -712,46 +710,6 @@ export function DashboardPage() {
         </ChartCard>
       </div>
 
-      <section className="crm-card mt-5">
-        <div className="crm-card-heading">
-          <div>
-            <h2 className="crm-card-title">Needs attention</h2>
-            <p className="crm-card-subtitle">
-              The three places where a focused follow-up can change the week.
-            </p>
-          </div>
-          <span className="crm-source-tag">Workbook snapshot</span>
-        </div>
-        <div className="crm-attention-grid">
-          {topAttention.map((item) => (
-            <div
-              onClick={() =>
-                window.dispatchEvent(
-                  new CustomEvent("navigate-tab", {
-                    detail:
-                      item.route === "/forecast"
-                        ? "pipelines"
-                        : item.route.replace("/", ""),
-                  }),
-                )
-              }
-              key={item.label}
-              className={`crm-attention-item attention-${item.tone} cursor-pointer`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="crm-attention-label">{item.label}</span>
-                <ChevronRight size={16} />
-              </div>
-              <div className="mt-3 text-[18px] font-extrabold tracking-tight text-[#25334a]">
-                {item.value}
-              </div>
-              <div className="mt-1 text-[12px] text-[#7e8ca0]">
-                {item.detail}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </PageFrame>
   );
 }
