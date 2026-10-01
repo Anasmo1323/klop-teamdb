@@ -950,3 +950,8 @@ section[style*="overflow: hidden"] .ct-table-wrap {
   color: var(--text-muted);
   margin-top: 3px;
 }
+
+/* React DatePicker z-index override */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}

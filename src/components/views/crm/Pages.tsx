@@ -839,6 +839,7 @@ function AddRecordPanel({
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"
+                portalId="root"
                 customInput={
                   <Input
                     style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
@@ -919,6 +920,7 @@ function EditableInput({
         }}
         dateFormat="dd/MM/yyyy"
         placeholderText="dd/mm/yyyy"
+        portalId="root"
         customInput={
           <Input
             style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
