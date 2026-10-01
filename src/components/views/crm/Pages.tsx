@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, type FormEvent, type ReactNode } from "react";
+﻿import { useEffect, useState, useMemo, type FormEvent, type ReactNode } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "sonner";
@@ -83,7 +83,7 @@ import { db } from "@/firebase";
 import { writeBatch, doc, setDoc, updateDoc, query, getDocs, where, collection } from "firebase/firestore";
 
 const formatCode = (prefix: "PL" | "PO" | "IN", rawCode?: string) => {
-  if (!rawCode) return "â€”";
+  if (!rawCode) return "أ¢â‚¬â€‌";
   const cleanCode = rawCode.replace(/^(PL-|PO-|IN-)/i, "");
   return `${prefix}-${cleanCode}`;
 };
@@ -107,7 +107,7 @@ function PageFrame({ children }: { children: ReactNode }) {
   );
 }
 
-// Stage pill with dot â€” replaces plain StatusBadge for pipeline stages
+// Stage pill with dot أ¢â‚¬â€‌ replaces plain StatusBadge for pipeline stages
 const stagePillMap: Record<string, string> = {
   "Cold":          "badge badge-cold",
   "Prospecting":   "badge badge-prospecting",
@@ -220,8 +220,8 @@ export function SortableHeader({ label, sortKey, sortConfig, requestSort, classN
       <div className="flex items-center gap-1">
         {label}
         <span className="inline-flex flex-col text-[8px] leading-[0.5] opacity-40 ml-1">
-          <span className={isActive && sortConfig.direction === 'asc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>â–²</span>
-          <span className={isActive && sortConfig.direction === 'desc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>â–¼</span>
+          <span className={isActive && sortConfig.direction === 'asc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>▲</span>
+          <span className={isActive && sortConfig.direction === 'desc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>▼</span>
         </span>
       </div>
     </th>
@@ -308,7 +308,7 @@ export function DashboardPage() {
     }
   };
 
-  // â”€â”€ Live chart data computed from firebase rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // أ¢â€‌â‚¬أ¢â€‌â‚¬ Live chart data computed from firebase rows أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬
   // 1. Achievement by product line
   const achievementByProductLine = useMemo(() => {
     const lines: Record<string, { target: number; achieved: number }> = {};
@@ -341,7 +341,7 @@ export function DashboardPage() {
     }));
   }, [targetStore.rows, pipelineStore.rows, invoiceStore.rows, dateRange]);
 
-  // 2. Pipeline by stage â€” all stages including Closed Lost
+  // 2. Pipeline by stage أ¢â‚¬â€‌ all stages including Closed Lost
   const livePipelineByStage = useMemo(() => {
     return stageOrder.map((stage) => ({
       stage,
@@ -351,7 +351,7 @@ export function DashboardPage() {
     }));
   }, [pipelineStore.rows]);
 
-  // 3. Commercial momentum â€” live from real deal close dates
+  // 3. Commercial momentum أ¢â‚¬â€‌ live from real deal close dates
 
   const getGreeting = () => {
     const hour = parseInt(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Africa/Cairo' }).format(new Date()));
@@ -416,7 +416,7 @@ export function DashboardPage() {
                 dropdownMode="select"
                 className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
               />
-              <span className="text-[12px] font-bold text-[#a0abba] px-1">â†’</span>
+              <span className="text-[12px] font-bold text-[#a0abba] px-1">أ¢â€ â€™</span>
               <DatePicker
                 selected={dateRange.to ? new Date(`${dateRange.to}T00:00:00`) : null}
                 onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, to: date ? toLocalISO(date) : "" }))}
@@ -472,7 +472,7 @@ export function DashboardPage() {
       <div className="crm-dashboard-grid">
         <ChartCard
           title="Achievement by product line"
-          subtitle="Won deals vs target per product line آ· EUR"
+          subtitle="Won deals vs target per product line ط¢آ· EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
@@ -493,7 +493,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `â‚¬${Math.round(value / 1000)}k`
+                    `أ¢â€ڑآ¬${Math.round(value / 1000)}k`
                   }
                 />
                 <Tooltip
@@ -523,7 +523,7 @@ export function DashboardPage() {
 
         <ChartCard
           title="Pipeline by stage"
-          subtitle="Deal count and total value per stage آ· EUR"
+          subtitle="Deal count and total value per stage ط¢آ· EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
@@ -539,7 +539,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `â‚¬${Math.round(value / 1_000_000)}M`
+                    `أ¢â€ڑآ¬${Math.round(value / 1_000_000)}M`
                   }
                 />
                 <YAxis
@@ -666,7 +666,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `â‚¬${Math.round(value / 1000)}k`
+                    `أ¢â€ڑآ¬${Math.round(value / 1000)}k`
                   }
                 />
                 <Tooltip
@@ -732,7 +732,7 @@ function DataTable({
       {editing && (
         <div className="ct-edit-banner">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Edit mode â€” double-click any cell to edit. Hit Save changes when done.
+          Edit mode أ¢â‚¬â€‌ double-click any cell to edit. Hit Save changes when done.
         </div>
       )}
       {loading && (
@@ -1133,8 +1133,8 @@ export function TargetsPage() {
     }
     store.addRow({
       id: createRecordId("REP", store.rows),
-      rep: "â€”",
-      region: "â€”",
+      rep: "أ¢â‚¬â€‌",
+      region: "أ¢â‚¬â€‌",
       focus: draft.productLine.trim() || "To be assigned",
       productLine: draft.productLine.trim() || "To be assigned",
       target: Number(draft.target) || 0,
@@ -1170,9 +1170,9 @@ export function TargetsPage() {
               headers={[
                 "Target ID",
                 "Product Line",
-                "Target (â‚¬)",
+                "Target (أ¢â€ڑآ¬)",
                 "Target (EGP)",
-                "Achieved (â‚¬)",
+                "Achieved (أ¢â€ڑآ¬)",
                 "Achieved (EGP)",
                 "Progress",
                 "Status",
@@ -1218,19 +1218,19 @@ export function TargetsPage() {
         <StatCard
           label="Annual target"
           value={formatCurrency(targetTotal, true)}
-          helper={`Sum of Target column آ· ${formatCurrencyEGP(targetTotal * eurToEgp, true)}`}
+          helper={`Sum of Target column ط¢آ· ${formatCurrencyEGP(targetTotal * eurToEgp, true)}`}
           accent="navy"
         />
         <StatCard
           label="Achieved"
           value={formatCurrency(achievedTotal, true)}
-          helper={`${Math.round(targetAttainment * 100)}% attainment آ· ${formatCurrencyEGP(achievedTotal * eurToEgp, true)}`}
+          helper={`${Math.round(targetAttainment * 100)}% attainment ط¢آ· ${formatCurrencyEGP(achievedTotal * eurToEgp, true)}`}
           accent="teal"
         />
         <StatCard
           label="Gap to target"
           value={formatCurrency(targetTotal - achievedTotal, true)}
-          helper={`Target minus Won deals آ· ${formatCurrencyEGP((targetTotal - achievedTotal) * eurToEgp, true)}`}
+          helper={`Target minus Won deals ط¢آ· ${formatCurrencyEGP((targetTotal - achievedTotal) * eurToEgp, true)}`}
           accent="amber"
         />
       </div>
@@ -1240,9 +1240,9 @@ export function TargetsPage() {
           <thead>
             <tr>
               <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
-              <th>Target (â‚¬)</th>
+              <th>Target (أ¢â€ڑآ¬)</th>
               <th>Target (EGP)</th>
-              <th>Achieved (â‚¬)</th>
+              <th>Achieved (أ¢â€ڑآ¬)</th>
               <th>Achieved (EGP)</th>
               <th>Progress</th>
               <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2172,7 +2172,7 @@ export function InvoicesPage() {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
-    po: "â€”",
+    po: "أ¢â‚¬â€‌",
     amount: "",
     downPayment: "",
     status: "Draft",
@@ -2434,7 +2434,7 @@ export function InvoicesPage() {
                     {computedDaysOverdue} days
                   </span>
                 ) : (
-                  "â€”"
+                  "أ¢â‚¬â€‌"
                 );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
@@ -2768,7 +2768,7 @@ export function PipelinesPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `â‚¬${Math.round(value / 1_000_000)}M`
+                    `أ¢â€ڑآ¬${Math.round(value / 1_000_000)}M`
                   }
                 />
                 <YAxis
@@ -2805,7 +2805,7 @@ export function PipelinesPage() {
         </ChartCard>
         <ChartCard
           title="Gross Profit Analysis"
-          subtitle="Gross profit by stage based on Amount أ— Margin"
+          subtitle="Gross profit by stage based on Amount ط£â€” Margin"
         >
           <div className="crm-stage-list">
             {livePipelineByStage.map((row) => (
@@ -3179,9 +3179,9 @@ export function SalesTeamPage() {
                       </div>
                     ) : (
                       <>
-                        <div>{row.email ?? "â€”"}</div>
+                        <div>{row.email ?? "أ¢â‚¬â€‌"}</div>
                         <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
-                          {row.phone ?? "â€”"}
+                          {row.phone ?? "أ¢â‚¬â€‌"}
                         </div>
                       </>
                     )}
@@ -3705,5 +3705,6 @@ export function UpaContractsPage() {
     </PageFrame>
   );
 }
+
 
 
