@@ -103,7 +103,6 @@ export function ContactsView({ data, searchQuery = "", isAdmin = false, onEdit }
         
         const toggleFlag = async (e: React.MouseEvent) => {
           e.stopPropagation();
-          if (!isAdmin) return;
           try {
             const docRef = doc(db, "contacts", contact.id);
             await updateDoc(docRef, { flagged: !contact.flagged });
@@ -112,7 +111,7 @@ export function ContactsView({ data, searchQuery = "", isAdmin = false, onEdit }
           }
         };
 
-        return isAdmin ? (
+        return (
           <div className="flex justify-end opacity-0 group-hover/row:opacity-100 transition-opacity gap-1">
             <button 
               onClick={toggleFlag}
@@ -129,7 +128,7 @@ export function ContactsView({ data, searchQuery = "", isAdmin = false, onEdit }
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
-        ) : null;
+        );
       },
     })
   ], [isAdmin, onEdit]);
