@@ -2478,10 +2478,20 @@ export function InvoicesPage() {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
+              let computedDaysOverdue = row.daysOverdue;
+              if (store.editing && row.dueDate) {
+                const now = new Date();
+                now.setHours(0,0,0,0);
+                const due = new Date(row.dueDate);
+                due.setHours(0,0,0,0);
+                const diffTime = now.getTime() - due.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                computedDaysOverdue = diffDays > 0 ? diffDays : 0;
+              }
               const overdueCell =
-                row.daysOverdue > 0 ? (
+                computedDaysOverdue > 0 ? (
                   <span className="text-[#c55a66] font-semibold">
-                    {row.daysOverdue} days
+                    {computedDaysOverdue} days
                   </span>
                 ) : (
                   "—"
@@ -2597,20 +2607,8 @@ export function InvoicesPage() {
                       formatDate(row.dueDate)
                     )}
                   </td>
-                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-8`)}>
-                    {store.editingCell === `${row.id}-${8}` ? (
-                      <EditableInput
-                        type="number"
-                        value={row.daysOverdue}
-                        onChange={(value) =>
-                          store.updateRow(originalIndex, {
-                            daysOverdue: Number(value) || 0,
-                          })
-                        }
-                      />
-                    ) : (
-                      overdueCell
-                    )}
+                  <td>
+                    {overdueCell}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-9`)}>
                     {store.editingCell === `${row.id}-${9}` ? (
