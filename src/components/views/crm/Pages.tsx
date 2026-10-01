@@ -3664,10 +3664,10 @@ export function UpaContractsPage() {
                         showMonthDropdown
                         showYearDropdown
                         dropdownMode="select"
-                        open
+                        autoFocus
                         className="w-[110px] text-[12px] bg-transparent outline-none border-none cursor-pointer"
                       />
-                    ) : (row.expectedCollectionPeriod ? formatDate(row.expectedCollectionPeriod) : <span style={{ color: "#b0bac8" }}>—</span>)}
+                    ) : (row.expectedCollectionPeriod ? formatDate(row.expectedCollectionPeriod) : <span style={{ color: "#b0bac8" }}>-</span>)}
                   </td>
                   <td style={{ fontWeight: 600 }}>{formatCurrency(row.commissionValue)}</td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-status`)}>

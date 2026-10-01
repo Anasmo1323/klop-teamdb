@@ -953,5 +953,15 @@ section[style*="overflow: hidden"] .ct-table-wrap {
 
 /* React DatePicker z-index override */
 .react-datepicker-popper {
-  z-index: 9999 !important;
+  z-index: 99999 !important;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+/* Ensure parent cards don't clip the datepicker popover */
+.crm-card,
+.crm-form-grid {
+  overflow: visible !important;
 }
