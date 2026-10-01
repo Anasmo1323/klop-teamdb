@@ -704,6 +704,7 @@
 
 .crm-status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: var(--radius-pill); white-space: nowrap; }
 .status-on-track, .status-paid, .status-delivered, .status-active, .status-closed-won { background: var(--success-light); color: var(--success-text); }
+.status-downpayment { background: var(--primary-light); color: var(--primary-text); }
 .status-at-risk, .status-overdue, .status-pending, .status-closed-lost { background: var(--danger-light); color: var(--danger-text); }
 .status-watch, .status-approved, .status-warm { background: var(--warning-light); color: var(--warning-text); }
 .status-setup, .status-draft, .status-prospecting, .status-cold, .status-sent, .status-shipped { background: #F1F5F9; color: var(--text-muted); }

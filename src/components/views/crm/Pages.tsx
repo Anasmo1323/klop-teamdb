@@ -2157,25 +2157,36 @@ export function InvoicesPage() {
     now.setHours(0,0,0,0);
     
     Promise.all(store.rows.map(async (row) => {
-      if (row.dueDate && row.status !== "Paid") {
-        const due = new Date(row.dueDate);
-        due.setHours(0,0,0,0);
-        const diffTime = now.getTime() - due.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        
-        let newStatus = row.status;
-        let newDays = 0;
-        
-        if (diffDays > 0) {
-          newStatus = "Overdue";
-          newDays = diffDays;
-        } else if (row.status === "Overdue") {
-          newStatus = "Sent";
+      let newStatus = row.status;
+      let newDays = row.daysOverdue;
+      const down = row.downPayment ?? 0;
+      
+      if (down > 0 && down >= row.amount && row.amount > 0) {
+        newStatus = "Paid";
+        newDays = 0;
+      } else {
+        if (row.dueDate && newStatus !== "Paid") {
+          const due = new Date(row.dueDate);
+          due.setHours(0,0,0,0);
+          const diffTime = now.getTime() - due.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays > 0) {
+            newStatus = "Overdue";
+            newDays = diffDays;
+          } else {
+            newDays = 0;
+            if (down > 0 && down < row.amount) {
+              newStatus = "Downpayment";
+            } else if (newStatus === "Overdue" || newStatus === "Downpayment") {
+              newStatus = "Sent";
+            }
+          }
         }
-        
-        if (row.status !== newStatus || row.daysOverdue !== newDays) {
-          await updateDoc(doc(db, "medsales-invoices", row.id), { status: newStatus, daysOverdue: newDays });
-        }
+      }
+
+      if (row.status !== newStatus || row.daysOverdue !== newDays) {
+        await updateDoc(doc(db, "medsales-invoices", row.id), { status: newStatus, daysOverdue: newDays });
       }
     })).catch(console.error);
   }, [store.rows]);
@@ -2262,7 +2273,7 @@ export function InvoicesPage() {
         setSearch={setSearch}
         filter={filter}
         setFilter={setFilter}
-        filterOptions={["All statuses", "Paid", "Sent", "Overdue", "Draft"]}
+        filterOptions={["All statuses", "Paid", "Sent", "Downpayment", "Overdue", "Draft"]}
         action={
           <div className="crm-report-actions">
             <Button

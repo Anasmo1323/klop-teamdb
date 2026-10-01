@@ -41,7 +41,7 @@ export type InvoiceRow = {
   po: string;
   amount: number;
   downPayment?: number;
-  status: "Draft" | "Sent" | "Overdue" | "Paid";
+  status: "Draft" | "Sent" | "Downpayment" | "Overdue" | "Paid";
   issueDate: string;
   dueDate: string;
   daysOverdue: number;
