@@ -132,7 +132,7 @@ export function ContactsView({ data, searchQuery = "", isAdmin = false, onEdit }
         ) : null;
       },
     })
-  ], []);
+  ], [isAdmin, onEdit]);
 
   const table = useReactTable({
     data,
