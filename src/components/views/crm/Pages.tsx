@@ -3398,7 +3398,18 @@ export function SetupPage() {
 // --- UPA Contracts Page ---
 export function UpaContractsPage() {
   const store = useEditableRows<UpaContractRow>("upa-contracts", upaContracts);
+  const targetStore = useEditableRows<TargetRow>("medsales-targets", targets);
   useHighlightRow(store.rows);
+
+  // Derive unique supplier names from live Targets tab product lines
+  const upaSuppliers = useMemo(() => {
+    const lines = [...new Set(
+      targetStore.rows
+        .map(r => r.productLine ?? r.focus)
+        .filter(Boolean)
+    )] as string[];
+    return lines.length > 0 ? lines : ["KLS Martin"];
+  }, [targetStore.rows]);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All statuses");
@@ -3419,8 +3430,6 @@ export function UpaContractsPage() {
     "Delivered",
     "Delivered and Payment Received",
   ];
-
-  const upaSuppliers = ["KLS Martin", "Braun", "Medtronic", "Stryker", "Zimmer Biomet", "Other"];
 
   const totalContractValue = store.rows.reduce((s, r) => s + r.contractValue, 0);
   const totalCommission = store.rows.reduce((s, r) => s + r.commissionValue, 0);
