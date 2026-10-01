@@ -1084,7 +1084,6 @@ export function TargetsPage() {
   const [draft, setDraft] = useState<Record<string, string>>({
     productLine: "",
     target: "",
-    achieved: "",
     status: "On Track",
   });
   const { role } = useCrmAccess();
@@ -1093,6 +1092,21 @@ export function TargetsPage() {
 
   const store = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
+  const invoiceStore = useEditableRows("medsales-invoices", []);
+
+  const getComputedAchieved = (productLine: string) => {
+    if (!productLine || productLine === "To be assigned") return 0;
+    const dealCodes = new Set(
+      pipelineStore.rows
+        .filter(d => (d.productLine ?? d.product) === productLine)
+        .map(d => d.code)
+        .filter(Boolean)
+    );
+    return invoiceStore.rows
+      .filter(inv => inv.status === "Paid" && inv.code && dealCodes.has(inv.code))
+      .reduce((sum, inv) => sum + inv.amount, 0);
+  };
+
   const rows = store.rows.filter(
     (row) =>
       `${row.productLine ?? row.focus ?? ""} ${row.rep}`
@@ -1100,19 +1114,20 @@ export function TargetsPage() {
         .includes(search.toLowerCase()) &&
       (filter === "All statuses" || row.status === filter),
   );
+  
   const targetTotal = store.rows.reduce((sum, row) => sum + row.target, 0);
-  const achievedTotal = pipelineStore.rows
-    .filter((row) => row.stage === "Closed Won")
-    .reduce((sum, row) => sum + row.amount, 0);
+  const achievedTotal = store.rows.reduce((sum, row) => sum + getComputedAchieved(row.productLine ?? row.focus ?? "To be assigned"), 0);
   const targetAttainment = targetTotal ? achievedTotal / targetTotal : 0;
+  
   const exportRows = store.rows.map((row) => {
     const productLine = row.productLine ?? row.focus ?? "To be assigned";
+    const computedAchieved = getComputedAchieved(productLine);
     return [
       row.id,
       productLine,
       row.target,
-      row.achieved,
-      `${row.target ? Math.round((row.achieved / row.target) * 100) : 0}%`,
+      computedAchieved,
+      `${row.target ? Math.round((computedAchieved / row.target) * 100) : 0}%`,
       row.status,
     ];
   });
@@ -1132,10 +1147,10 @@ export function TargetsPage() {
       focus: draft.productLine.trim() || "To be assigned",
       productLine: draft.productLine.trim() || "To be assigned",
       target: Number(draft.target) || 0,
-      achieved: Number(draft.achieved) || 0,
+      achieved: 0,
       status: draft.status as TargetRow["status"],
     });
-    setDraft({ productLine: "", target: "", achieved: "", status: "On Track" });
+    setDraft({ productLine: "", target: "", status: "On Track" });
     setAdding(false);
     toast.success("Target record added. Save changes to keep it.");
   };
@@ -1195,13 +1210,6 @@ export function TargetsPage() {
               step: 1,
             },
             {
-              name: "achieved",
-              label: "Achieved",
-              type: "number",
-              min: 0,
-              step: 1,
-            },
-            {
               name: "status",
               label: "Status",
               options: ["On Track", "Watch", "At Risk", "Setup"],
@@ -1255,11 +1263,12 @@ export function TargetsPage() {
               const originalIndex = store.rows.findIndex(
                 (item) => item.id === row.id,
               );
-              const pct = row.target
-                ? Math.round((row.achieved / row.target) * 100)
-                : 0;
               const productLine =
                 row.productLine ?? row.focus ?? "To be assigned";
+              const computedAchieved = getComputedAchieved(productLine);
+              const pct = row.target
+                ? Math.round((computedAchieved / row.target) * 100)
+                : 0;
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
                   <td onDoubleClick={canEditTargets ? () => store.startEditingCell(`${row.id}-1`) : undefined}>
@@ -1277,7 +1286,6 @@ export function TargetsPage() {
                         productLine
                       )}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{row.id}</div>
                   </td>
                   <td onDoubleClick={canEditTargets ? () => store.startEditingCell(`${row.id}-2`) : undefined}>
                     {store.editingCell === `${row.id}-${2}` ? (
@@ -1295,22 +1303,8 @@ export function TargetsPage() {
                     )}
                   </td>
                   <td>{formatCurrencyEGP(row.target * eurToEgp, true)}</td>
-                  <td onDoubleClick={canEditTargets ? () => store.startEditingCell(`${row.id}-3`) : undefined}>
-                    {store.editingCell === `${row.id}-${3}` ? (
-                      <EditableInput
-                        type="number"
-                        value={row.achieved}
-                        onChange={(value) =>
-                          store.updateRow(originalIndex, {
-                            achieved: Number(value) || 0,
-                          })
-                        }
-                      />
-                    ) : (
-                      formatCurrency(row.achieved, true)
-                    )}
-                  </td>
-                  <td>{formatCurrencyEGP(row.achieved * eurToEgp, true)}</td>
+                  <td>{formatCurrency(computedAchieved, true)}</td>
+                  <td>{formatCurrencyEGP(computedAchieved * eurToEgp, true)}</td>
                   <td>
                     <div className="flex items-center gap-2">
                       <div className="crm-progress">

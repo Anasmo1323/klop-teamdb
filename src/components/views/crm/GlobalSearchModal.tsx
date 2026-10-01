@@ -81,7 +81,7 @@ export function GlobalSearchModal({ open, onClose }: { open: boolean, onClose: (
     dataCache.forecast.forEach((f: any) => {
       if (`${f.client} ${f.productLine} ${f.product} ${f.deal}`.toLowerCase().includes(q)) {
         hits.push({
-          id: f.id, type: "Pipeline", title: f.client || "Unknown", subtitle: f.product || "", tab: "pipeline",
+          id: f.id, type: "Pipeline", title: f.client || "Unknown", subtitle: f.product || "", tab: "pipelines",
           icon: <Briefcase size={14} className="text-indigo-500" />
         });
       }
