@@ -2468,7 +2468,14 @@ export function InvoicesPage() {
                         }
                       />
                     ) : (
-                      formatCurrency(row.downPayment ?? 0, true)
+                      <div className="flex items-center gap-2">
+                        <span>{formatCurrency(row.downPayment ?? 0, true)}</span>
+                        {row.amount > 0 && (row.downPayment ?? 0) > 0 && (
+                          <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {Math.round(((row.downPayment ?? 0) / row.amount) * 100)}%
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-6`)}>
