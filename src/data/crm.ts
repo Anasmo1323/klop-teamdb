@@ -681,18 +681,18 @@ export const attentionItems = [
 
 export function formatCurrency(value: number, compact = false) {
   if (compact) {
-    if (Math.abs(value) >= 1_000_000) return `€${(value / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(value) >= 1_000_000) return `€${(value / 1_000_000).toFixed(3)}M`;
     if (Math.abs(value) >= 1_000) return `€${Math.round(value / 1_000)}K`;
   }
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(value);
 }
 
 export function formatCurrencyEGP(value: number, compact = false) {
   if (compact) {
-    if (Math.abs(value) >= 1_000_000) return `EGP ${(value / 1_000_000).toFixed(1)}M`;
+    if (Math.abs(value) >= 1_000_000) return `EGP ${(value / 1_000_000).toFixed(3)}M`;
     if (Math.abs(value) >= 1_000) return `EGP ${Math.round(value / 1_000)}K`;
   }
-  return new Intl.NumberFormat("en-EG", { style: "currency", currency: "EGP", maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat("en-EG", { style: "currency", currency: "EGP", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(value);
 }
 
 export function formatDate(value?: string) {

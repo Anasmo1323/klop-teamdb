@@ -80,6 +80,12 @@ import {
 import { db } from "@/firebase";
 import { writeBatch, doc, setDoc, updateDoc, query, getDocs, where, collection } from "firebase/firestore";
 
+const formatCode = (prefix: "PL" | "PO" | "IN", rawCode?: string) => {
+  if (!rawCode) return "—";
+  const cleanCode = rawCode.replace(/^(PL-|PO-|IN-)/i, "");
+  return `${prefix}-${cleanCode}`;
+};
+
 const chartTooltip = {
   contentStyle: {
     borderRadius: 12,
@@ -1502,22 +1508,22 @@ export function ForecastPage() {
       )}
       <div className="crm-stat-grid crm-stat-grid-3">
         <StatCard
-          label="Open pipeline"
-          value={formatCurrency(liveOpenPipeline, true)}
-          helper={`${liveActiveDeals} active deals`}
-          accent="navy"
+          label="Win rate"
+          value={`${Math.round(liveWinRate * 100)}%`}
+          helper="Closed won / total money"
+          accent="teal"
         />
         <StatCard
-          label="Won deals"
-          value={formatCurrency(liveWonDeals, true)}
-          helper="Sum of Amount for Closed Won deals"
+          label="Active Deals"
+          value={store.rows.filter(r => r.stage === "Warm" && r.amount > 0).length.toString()}
+          helper="Open warm deals"
           accent="amber"
         />
         <StatCard
-          label="Win rate"
-          value={`${Math.round(liveWinRate * 100)}%`}
-          helper="Closed won vs. progressed"
-          accent="teal"
+          label="Total open pipelines"
+          value={formatCurrency(liveOpenPipeline, true)}
+          helper="Excludes closed won/lost"
+          accent="navy"
         />
       </div>
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
@@ -1554,7 +1560,7 @@ export function ForecastPage() {
                         }
                       />
                     ) : (
-                      (row.code ?? "—")
+                      <div className="font-semibold text-primary">{formatCode("PL", row.code)}</div>
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-2`)}>
@@ -1974,7 +1980,18 @@ export function PurchaseOrdersPage() {
               );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
-                  <td style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>{row.id}</td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-1`)}>
+                    {store.editingCell === `${row.id}-${1}` ? (
+                      <EditableInput
+                        value={row.code ?? ""}
+                        onChange={(value) =>
+                          store.updateRow(originalIndex, { code: value })
+                        }
+                      />
+                    ) : (
+                      <div className="font-semibold text-primary">{formatCode("PO", row.code)}</div>
+                    )}
+                  </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-2`)}>
                     {store.editingCell === `${row.id}-${2}` ? (
                       <EditableInput
@@ -2132,6 +2149,36 @@ export function InvoicesPage() {
     followUp: "",
   });
   const store = useEditableRows<InvoiceRow>("medsales-invoices", []);
+
+  useEffect(() => {
+    let changed = false;
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    
+    Promise.all(store.rows.map(async (row) => {
+      if (row.dueDate && row.status !== "Paid") {
+        const due = new Date(row.dueDate);
+        due.setHours(0,0,0,0);
+        const diffTime = now.getTime() - due.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        let newStatus = row.status;
+        let newDays = 0;
+        
+        if (diffDays > 0) {
+          newStatus = "Overdue";
+          newDays = diffDays;
+        } else if (row.status === "Overdue") {
+          newStatus = "Sent";
+        }
+        
+        if (row.status !== newStatus || row.daysOverdue !== newDays) {
+          await updateDoc(doc(db, "medsales-invoices", row.id), { status: newStatus, daysOverdue: newDays });
+        }
+      }
+    })).catch(console.error);
+  }, [store.rows]);
+
   useEffect(() => {
     const highlightId = sessionStorage.getItem('highlightRow');
     if (highlightId && store.rows.some(r => r.id === highlightId)) {
@@ -2345,7 +2392,18 @@ export function InvoicesPage() {
                 );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
-                  <td style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 14 }}>{row.id}</td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-1`)}>
+                    {store.editingCell === `${row.id}-${1}` ? (
+                      <EditableInput
+                        value={row.code ?? ""}
+                        onChange={(value) =>
+                          store.updateRow(originalIndex, { code: value })
+                        }
+                      />
+                    ) : (
+                      <div className="font-semibold text-primary">{formatCode("IN", row.code)}</div>
+                    )}
+                  </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-2`)}>
                     {store.editingCell === `${row.id}-${2}` ? (
                       <EditableInput
