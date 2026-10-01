@@ -46,6 +46,25 @@ export type InvoiceRow = {
   followUp: string;
 };
 
+export type UpaContractRow = {
+  id: string;
+  customerName: string;
+  supplier: string;
+  contractValue: number;
+  commissionPct: number;
+  expectedCollectionPeriod: string;
+  commissionValue: number;
+  status: "Delivered" | "Delivered and Payment Received" | "signed 2026" | "Pending" | "In Progress";
+};
+
+export const upaContracts: UpaContractRow[] = [
+  { id: "UPA-A1", customerName: "UPA A1", supplier: "KLS Martin", contractValue: 1661367.59, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 149523.08, status: "Delivered" },
+  { id: "UPA-A2", customerName: "UPA A2", supplier: "KLS Martin", contractValue: 695524.63, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 62597.22, status: "Delivered" },
+  { id: "UPA-A3", customerName: "UPA A3", supplier: "KLS Martin", contractValue: 955653.93, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 86008.85, status: "Delivered" },
+  { id: "UPA-A4", customerName: "UPA A4", supplier: "KLS Martin", contractValue: 2127126.60, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 191441.39, status: "Delivered and Payment Received" },
+  { id: "UPA-A8", customerName: "UPA A8", supplier: "KLS Martin", contractValue: 1974069.01, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 177666.21, status: "signed 2026" },
+];
+
 export type TeamRow = {
   id: string;
   rep: string;

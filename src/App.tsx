@@ -13,7 +13,7 @@ import { ExchangeRatesProvider } from "./contexts/ExchangeRatesContext";
 import { GlobalTopBar } from "./contexts/GlobalTopBar";
 import { LoginView } from "./components/views/LoginView";
 import { Toaster } from "./components/ui/sonner";
-import { DashboardPage, TargetsPage, ForecastPage, PipelinesPage, PurchaseOrdersPage, InvoicesPage, SalesTeamPage, SetupPage } from "./components/views/crm/Pages";
+import { DashboardPage, TargetsPage, ForecastPage, PipelinesPage, PurchaseOrdersPage, InvoicesPage, SalesTeamPage, SetupPage, UpaContractsPage } from "./components/views/crm/Pages";
 import { CrmShell } from "./components/views/crm/CrmShell";
 
 export const ALLOWED_USERS = [
@@ -193,6 +193,8 @@ function App() {
         return <PurchaseOrdersPage />;
       case "invoices":
         return <InvoicesPage />;
+      case "upa":
+        return <UpaContractsPage />;
       case "team":
         return <SalesTeamPage />;
       case "setup":

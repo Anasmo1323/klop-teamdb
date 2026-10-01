@@ -10,6 +10,7 @@ import {
   UsersRound,
   ChevronLeft,
   ChevronRight,
+  FileSignature,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useState } from "react";
@@ -28,6 +29,7 @@ const topNav = [
   { id: "pipelines", icon: SlidersHorizontal, label: "Pipelines" },
   { id: "orders",    icon: ShoppingCart,    label: "Purchase Orders" },
   { id: "invoices",  icon: ReceiptText,     label: "Invoices"  },
+  { id: "upa",       icon: FileSignature,   label: "UPA Contracts" },
   { id: "team",      icon: UsersRound,      label: "Sales Team" },
   { id: "files",     icon: FolderOpen,      label: "Files"     },
 ];

@@ -71,17 +71,19 @@ import {
   totalInvoiced,
   collected,
   overdueExposure,
+  upaContracts,
   type DealRow,
   type InvoiceRow,
   type PurchaseOrderRow,
   type TargetRow,
   type TeamRow,
+  type UpaContractRow,
 } from "@/data/crm";
 import { db } from "@/firebase";
 import { writeBatch, doc, setDoc, updateDoc, query, getDocs, where, collection } from "firebase/firestore";
 
 const formatCode = (prefix: "PL" | "PO" | "IN", rawCode?: string) => {
-  if (!rawCode) return "—";
+  if (!rawCode) return "â€”";
   const cleanCode = rawCode.replace(/^(PL-|PO-|IN-)/i, "");
   return `${prefix}-${cleanCode}`;
 };
@@ -105,7 +107,7 @@ function PageFrame({ children }: { children: ReactNode }) {
   );
 }
 
-// Stage pill with dot — replaces plain StatusBadge for pipeline stages
+// Stage pill with dot â€” replaces plain StatusBadge for pipeline stages
 const stagePillMap: Record<string, string> = {
   "Cold":          "badge badge-cold",
   "Prospecting":   "badge badge-prospecting",
@@ -218,8 +220,8 @@ export function SortableHeader({ label, sortKey, sortConfig, requestSort, classN
       <div className="flex items-center gap-1">
         {label}
         <span className="inline-flex flex-col text-[8px] leading-[0.5] opacity-40 ml-1">
-          <span className={isActive && sortConfig.direction === 'asc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>▲</span>
-          <span className={isActive && sortConfig.direction === 'desc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>▼</span>
+          <span className={isActive && sortConfig.direction === 'asc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>â–²</span>
+          <span className={isActive && sortConfig.direction === 'desc' ? 'text-blue-600 opacity-100 font-bold text-[10px]' : ''}>â–¼</span>
         </span>
       </div>
     </th>
@@ -306,7 +308,7 @@ export function DashboardPage() {
     }
   };
 
-  // ── Live chart data computed from firebase rows ────────────────────────────
+  // â”€â”€ Live chart data computed from firebase rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // 1. Achievement by product line
   const achievementByProductLine = useMemo(() => {
     const lines: Record<string, { target: number; achieved: number }> = {};
@@ -339,7 +341,7 @@ export function DashboardPage() {
     }));
   }, [targetStore.rows, pipelineStore.rows, invoiceStore.rows, dateRange]);
 
-  // 2. Pipeline by stage — all stages including Closed Lost
+  // 2. Pipeline by stage â€” all stages including Closed Lost
   const livePipelineByStage = useMemo(() => {
     return stageOrder.map((stage) => ({
       stage,
@@ -349,7 +351,7 @@ export function DashboardPage() {
     }));
   }, [pipelineStore.rows]);
 
-  // 3. Commercial momentum — live from real deal close dates
+  // 3. Commercial momentum â€” live from real deal close dates
 
   const getGreeting = () => {
     const hour = parseInt(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Africa/Cairo' }).format(new Date()));
@@ -414,7 +416,7 @@ export function DashboardPage() {
                 dropdownMode="select"
                 className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
               />
-              <span className="text-[12px] font-bold text-[#a0abba] px-1">→</span>
+              <span className="text-[12px] font-bold text-[#a0abba] px-1">â†’</span>
               <DatePicker
                 selected={dateRange.to ? new Date(`${dateRange.to}T00:00:00`) : null}
                 onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, to: date ? toLocalISO(date) : "" }))}
@@ -470,7 +472,7 @@ export function DashboardPage() {
       <div className="crm-dashboard-grid">
         <ChartCard
           title="Achievement by product line"
-          subtitle="Won deals vs target per product line · EUR"
+          subtitle="Won deals vs target per product line آ· EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
@@ -491,7 +493,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `€${Math.round(value / 1000)}k`
+                    `â‚¬${Math.round(value / 1000)}k`
                   }
                 />
                 <Tooltip
@@ -521,7 +523,7 @@ export function DashboardPage() {
 
         <ChartCard
           title="Pipeline by stage"
-          subtitle="Deal count and total value per stage · EUR"
+          subtitle="Deal count and total value per stage آ· EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
@@ -537,7 +539,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `€${Math.round(value / 1_000_000)}M`
+                    `â‚¬${Math.round(value / 1_000_000)}M`
                   }
                 />
                 <YAxis
@@ -664,7 +666,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `€${Math.round(value / 1000)}k`
+                    `â‚¬${Math.round(value / 1000)}k`
                   }
                 />
                 <Tooltip
@@ -730,7 +732,7 @@ function DataTable({
       {editing && (
         <div className="ct-edit-banner">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Edit mode — double-click any cell to edit. Hit Save changes when done.
+          Edit mode â€” double-click any cell to edit. Hit Save changes when done.
         </div>
       )}
       {loading && (
@@ -1131,8 +1133,8 @@ export function TargetsPage() {
     }
     store.addRow({
       id: createRecordId("REP", store.rows),
-      rep: "—",
-      region: "—",
+      rep: "â€”",
+      region: "â€”",
       focus: draft.productLine.trim() || "To be assigned",
       productLine: draft.productLine.trim() || "To be assigned",
       target: Number(draft.target) || 0,
@@ -1168,9 +1170,9 @@ export function TargetsPage() {
               headers={[
                 "Target ID",
                 "Product Line",
-                "Target (€)",
+                "Target (â‚¬)",
                 "Target (EGP)",
-                "Achieved (€)",
+                "Achieved (â‚¬)",
                 "Achieved (EGP)",
                 "Progress",
                 "Status",
@@ -1216,19 +1218,19 @@ export function TargetsPage() {
         <StatCard
           label="Annual target"
           value={formatCurrency(targetTotal, true)}
-          helper={`Sum of Target column · ${formatCurrencyEGP(targetTotal * eurToEgp, true)}`}
+          helper={`Sum of Target column آ· ${formatCurrencyEGP(targetTotal * eurToEgp, true)}`}
           accent="navy"
         />
         <StatCard
           label="Achieved"
           value={formatCurrency(achievedTotal, true)}
-          helper={`${Math.round(targetAttainment * 100)}% attainment · ${formatCurrencyEGP(achievedTotal * eurToEgp, true)}`}
+          helper={`${Math.round(targetAttainment * 100)}% attainment آ· ${formatCurrencyEGP(achievedTotal * eurToEgp, true)}`}
           accent="teal"
         />
         <StatCard
           label="Gap to target"
           value={formatCurrency(targetTotal - achievedTotal, true)}
-          helper={`Target minus Won deals · ${formatCurrencyEGP((targetTotal - achievedTotal) * eurToEgp, true)}`}
+          helper={`Target minus Won deals آ· ${formatCurrencyEGP((targetTotal - achievedTotal) * eurToEgp, true)}`}
           accent="amber"
         />
       </div>
@@ -1238,9 +1240,9 @@ export function TargetsPage() {
           <thead>
             <tr>
               <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
-              <th>Target (€)</th>
+              <th>Target (â‚¬)</th>
               <th>Target (EGP)</th>
-              <th>Achieved (€)</th>
+              <th>Achieved (â‚¬)</th>
               <th>Achieved (EGP)</th>
               <th>Progress</th>
               <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2170,7 +2172,7 @@ export function InvoicesPage() {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
-    po: "—",
+    po: "â€”",
     amount: "",
     downPayment: "",
     status: "Draft",
@@ -2432,7 +2434,7 @@ export function InvoicesPage() {
                     {computedDaysOverdue} days
                   </span>
                 ) : (
-                  "—"
+                  "â€”"
                 );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
@@ -2766,7 +2768,7 @@ export function PipelinesPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `€${Math.round(value / 1_000_000)}M`
+                    `â‚¬${Math.round(value / 1_000_000)}M`
                   }
                 />
                 <YAxis
@@ -2803,7 +2805,7 @@ export function PipelinesPage() {
         </ChartCard>
         <ChartCard
           title="Gross Profit Analysis"
-          subtitle="Gross profit by stage based on Amount × Margin"
+          subtitle="Gross profit by stage based on Amount أ— Margin"
         >
           <div className="crm-stage-list">
             {livePipelineByStage.map((row) => (
@@ -3177,9 +3179,9 @@ export function SalesTeamPage() {
                       </div>
                     ) : (
                       <>
-                        <div>{row.email ?? "—"}</div>
+                        <div>{row.email ?? "â€”"}</div>
                         <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
-                          {row.phone ?? "—"}
+                          {row.phone ?? "â€”"}
                         </div>
                       </>
                     )}
@@ -3392,3 +3394,273 @@ export function SetupPage() {
     </PageFrame>
   );
 }
+
+// --- UPA Contracts Page ---
+export function UpaContractsPage() {
+  const store = useEditableRows<UpaContractRow>("upa-contracts", upaContracts);
+  useHighlightRow(store.rows);
+
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All statuses");
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState({
+    customerName: "",
+    supplier: "KLS Martin",
+    contractValue: "",
+    commissionPct: "0.09",
+    expectedCollectionPeriod: "",
+    status: "Pending" as UpaContractRow["status"],
+  });
+
+  const upaStatuses: UpaContractRow["status"][] = [
+    "Pending",
+    "In Progress",
+    "signed 2026",
+    "Delivered",
+    "Delivered and Payment Received",
+  ];
+
+  const totalContractValue = store.rows.reduce((s, r) => s + r.contractValue, 0);
+  const totalCommission = store.rows.reduce((s, r) => s + r.commissionValue, 0);
+  const paidRows = store.rows.filter(r => r.status === "Delivered and Payment Received");
+  const collectedCommission = paidRows.reduce((s, r) => s + r.commissionValue, 0);
+  const pendingCommission = totalCommission - collectedCommission;
+  const contractCount = store.rows.length;
+
+  const rows = store.rows.filter(
+    (r) =>
+      (r.customerName + r.supplier + r.id).toLowerCase().includes(search.toLowerCase()) &&
+      (filter === "All statuses" || r.status === filter),
+  );
+
+  const exportRows = store.rows.map((r) => [
+    r.id, r.customerName, r.supplier, r.contractValue,
+    `${Math.round(r.commissionPct * 100)}%`,
+    r.expectedCollectionPeriod, r.commissionValue, r.status,
+  ]);
+
+  const addRecord = () => {
+    if (!draft.customerName.trim()) {
+      toast.error("Enter the customer name before adding.");
+      return;
+    }
+    const contractValue = Number(draft.contractValue) || 0;
+    const commissionPct = Number(draft.commissionPct) || 0;
+    store.addRow({
+      id: createRecordId("UPA", store.rows),
+      customerName: draft.customerName.trim(),
+      supplier: draft.supplier.trim(),
+      contractValue,
+      commissionPct,
+      expectedCollectionPeriod: draft.expectedCollectionPeriod,
+      commissionValue: contractValue * commissionPct,
+      status: draft.status,
+    });
+    setDraft({ customerName: "", supplier: "KLS Martin", contractValue: "", commissionPct: "0.09", expectedCollectionPeriod: "", status: "Pending" });
+    setAdding(false);
+    toast.success("Contract added. Save changes to keep it.");
+  };
+
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
+
+  return (
+    <PageFrame>
+      <RouteTableHeader
+        title="UPA Contracts"
+        search={search}
+        setSearch={setSearch}
+        filter={filter}
+        setFilter={setFilter}
+        filterOptions={["All statuses", ...upaStatuses]}
+        action={
+          <div className="crm-report-actions">
+            <Button className="btn-secondary" onClick={() => setAdding(true)}>+ Add contract</Button>
+            <ReportActions
+              title="UPA External Contracts for KLS Martin 2026"
+              headers={["ID", "Customer Name", "Supplier", "Contract Value", "Commission %", "Collection Period", "Commission Value", "Status"]}
+              rows={exportRows}
+              fileName="upa-contracts"
+              editing={store.editing}
+              onEdit={() => store.setEditing(true)}
+              onSave={() => store.save()}
+              onReset={() => store.reset()}
+              saved={store.saved}
+            />
+          </div>
+        }
+      />
+
+      <div className="crm-stat-grid crm-stat-grid-4">
+        <StatCard
+          label="Total contract value"
+          value={formatCurrency(totalContractValue, true)}
+          helper={`${contractCount} contracts`}
+          accent="navy"
+        />
+        <StatCard
+          label="Total commission"
+          value={formatCurrency(totalCommission, true)}
+          helper={`${Math.round((totalCommission / (totalContractValue || 1)) * 100)}% avg rate`}
+          accent="teal"
+        />
+        <StatCard
+          label="Commission collected"
+          value={formatCurrency(collectedCommission, true)}
+          helper={`${paidRows.length} contracts paid`}
+          accent="teal"
+        />
+        <StatCard
+          label="Commission pending"
+          value={formatCurrency(pendingCommission, true)}
+          helper={`${store.rows.length - paidRows.length} contracts outstanding`}
+          accent="rose"
+        />
+      </div>
+
+      {adding && (
+        <section className="crm-card mt-4">
+          <div className="crm-card-heading">
+            <h2 className="crm-card-title">New contract</h2>
+          </div>
+          <div className="crm-form-grid">
+            <label className="crm-field">
+              <span>Customer name *</span>
+              <Input value={draft.customerName} onChange={(e) => setDraft(p => ({ ...p, customerName: e.target.value }))} placeholder="Customer name" />
+            </label>
+            <label className="crm-field">
+              <span>Supplier</span>
+              <Input value={draft.supplier} onChange={(e) => setDraft(p => ({ ...p, supplier: e.target.value }))} placeholder="Supplier" />
+            </label>
+            <label className="crm-field">
+              <span>Contract value (EUR)</span>
+              <Input type="number" value={draft.contractValue} onChange={(e) => setDraft(p => ({ ...p, contractValue: e.target.value }))} placeholder="0.000" />
+            </label>
+            <label className="crm-field">
+              <span>Commission %</span>
+              <Input type="number" value={draft.commissionPct} step="0.01" onChange={(e) => setDraft(p => ({ ...p, commissionPct: e.target.value }))} placeholder="0.09" />
+            </label>
+            <label className="crm-field">
+              <span>Expected collection period</span>
+              <Input value={draft.expectedCollectionPeriod} onChange={(e) => setDraft(p => ({ ...p, expectedCollectionPeriod: e.target.value }))} placeholder="e.g. Q2 2026" />
+            </label>
+            <label className="crm-field">
+              <span>Status</span>
+              <Select value={draft.status} onValueChange={(v) => setDraft(p => ({ ...p, status: v as UpaContractRow["status"] }))}>
+                <SelectTrigger style={{ height: 36, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {upaStatuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </label>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <Button className="btn-blue" onClick={addRecord}>Add</Button>
+            <Button className="btn-secondary" onClick={() => setAdding(false)}>Cancel</Button>
+          </div>
+        </section>
+      )}
+
+      <section className="crm-card mt-4">
+        <DataTable editing={store.editing} loading={store.loading}>
+          <thead>
+            <tr>
+              <SortableHeader label="ID" sortKey="id" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Customer name" sortKey="customerName" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Supplier" sortKey="supplier" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Contract value" sortKey="contractValue" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Commission %" sortKey="commissionPct" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Collection period" sortKey="expectedCollectionPeriod" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Commission value" sortKey="commissionValue" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {sortedData.length === 0 ? (
+              <tr><td colSpan={9}><EmptyState title="No contracts" detail="Add a contract or adjust your search." /></td></tr>
+            ) : sortedData.map((row) => {
+              const originalIndex = store.rows.findIndex(r => r.id === row.id);
+              return (
+                <tr key={row.id} id={`row-${row.id}`}>
+                  <td style={{ fontWeight: 600, color: "var(--text-heading)", fontSize: 13 }}>{row.id}</td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-cname`)}>
+                    {store.editingCell === `${row.id}-cname` ? (
+                      <Input autoFocus value={row.customerName}
+                        onChange={(e) => store.updateRow(originalIndex, { customerName: e.target.value })}
+                        onBlur={() => store.startEditingCell("")} style={{ height: 28, fontSize: 13 }} />
+                    ) : row.customerName}
+                  </td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-supp`)}>
+                    {store.editingCell === `${row.id}-supp` ? (
+                      <Input autoFocus value={row.supplier}
+                        onChange={(e) => store.updateRow(originalIndex, { supplier: e.target.value })}
+                        onBlur={() => store.startEditingCell("")} style={{ height: 28, fontSize: 13 }} />
+                    ) : row.supplier}
+                  </td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-cv`)}>
+                    {store.editingCell === `${row.id}-cv` ? (
+                      <Input autoFocus type="number" value={row.contractValue}
+                        onChange={(e) => {
+                          const cv = Number(e.target.value) || 0;
+                          store.updateRow(originalIndex, { contractValue: cv, commissionValue: cv * row.commissionPct });
+                        }}
+                        onBlur={() => store.startEditingCell("")} style={{ height: 28, fontSize: 13 }} />
+                    ) : formatCurrency(row.contractValue)}
+                  </td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-pct`)}>
+                    {store.editingCell === `${row.id}-pct` ? (
+                      <Input autoFocus type="number" step="0.01" value={row.commissionPct}
+                        onChange={(e) => {
+                          const pct = Number(e.target.value) || 0;
+                          store.updateRow(originalIndex, { commissionPct: pct, commissionValue: row.contractValue * pct });
+                        }}
+                        onBlur={() => store.startEditingCell("")} style={{ height: 28, fontSize: 13 }} />
+                    ) : `${Math.round(row.commissionPct * 100)}%`}
+                  </td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-ecp`)}>
+                    {store.editingCell === `${row.id}-ecp` ? (
+                      <Input autoFocus value={row.expectedCollectionPeriod}
+                        onChange={(e) => store.updateRow(originalIndex, { expectedCollectionPeriod: e.target.value })}
+                        onBlur={() => store.startEditingCell("")} style={{ height: 28, fontSize: 13 }} />
+                    ) : (row.expectedCollectionPeriod || <span style={{ color: "#b0bac8" }}>-</span>)}
+                  </td>
+                  <td style={{ fontWeight: 600 }}>{formatCurrency(row.commissionValue)}</td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-status`)}>
+                    {store.editingCell === `${row.id}-status` ? (
+                      <Select value={row.status} onValueChange={(v) => store.updateRow(originalIndex, { status: v as UpaContractRow["status"] })}>
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {upaStatuses.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    ) : <StatusBadge status={row.status} />}
+                  </td>
+                  <td>
+                    <button className="crm-icon-btn" title="Delete" onClick={() => store.deleteRow(originalIndex)}>
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr style={{ background: "var(--surface-2)", fontWeight: 700 }}>
+              <td colSpan={3} style={{ paddingLeft: 12, color: "var(--text-muted)", fontSize: 12 }}>TOTALS</td>
+              <td>{formatCurrency(store.rows.reduce((s, r) => s + r.contractValue, 0))}</td>
+              <td /><td />
+              <td>{formatCurrency(store.rows.reduce((s, r) => s + r.commissionValue, 0))}</td>
+              <td colSpan={2} />
+            </tr>
+          </tfoot>
+        </DataTable>
+      </section>
+    </PageFrame>
+  );
+}
+
+
