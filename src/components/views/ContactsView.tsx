@@ -13,6 +13,7 @@ import {
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import type { Contact } from "../../App";
+import { useHighlightRow } from "../../hooks/useHighlightRow";
 
 interface ContactsViewProps {
   data: Contact[];
@@ -25,6 +26,7 @@ const columnHelper = createColumnHelper<Contact>();
 
 export function ContactsView({ data, searchQuery = "", isAdmin = false, onEdit }: ContactsViewProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  useHighlightRow(data);
 
   const columns = useMemo(() => [
     columnHelper.accessor("employeeName", {
@@ -194,7 +196,8 @@ export function ContactsView({ data, searchQuery = "", isAdmin = false, onEdit }
               {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
                   <tr 
-                    key={row.id} 
+                    key={row.id}
+                    id={`row-${row.original.id}`}
                     className="group/row border-b border-gray-50 last:border-0 hover:bg-[#F9FAFB] transition-colors"
                   >
                     {row.getVisibleCells().map((cell) => (

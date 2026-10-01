@@ -52,6 +52,7 @@ import {
 } from "./CrmShell";
 import { useExchangeRates } from "@/contexts/ExchangeRatesContext";
 import { useFirebaseRows as useEditableRows } from "@/hooks/useFirebaseRows";
+import { useHighlightRow } from "@/hooks/useHighlightRow";
 import {
   achievementByRep,
   attentionItems,
@@ -1093,6 +1094,7 @@ export function TargetsPage() {
   const store = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
   const invoiceStore = useEditableRows("medsales-invoices", []);
+  useHighlightRow(store.rows);
 
   const getComputedAchieved = (productLine: string) => {
     if (!productLine || productLine === "To be assigned") return 0;
@@ -1417,6 +1419,7 @@ export function ForecastPage() {
   
   const store = useEditableRows("medsales-forecast", deals);
   const targetStore = useEditableRows("medsales-targets", []);
+  useHighlightRow(store.rows);
   const productLineOptions = Array.from(new Set(targetStore.rows.map((r: any) => r.productLine).filter(Boolean))) as string[];
   const rows = store.rows.filter(
     (row) =>
@@ -1852,23 +1855,7 @@ export function PurchaseOrdersPage() {
     }
   };
   const store = useEditableRows<PurchaseOrderRow>("medsales-purchase-orders", []);
-  useEffect(() => {
-    const highlightId = sessionStorage.getItem('highlightRow');
-    if (highlightId && store.rows.some(r => r.id === highlightId)) {
-      setTimeout(() => {
-        const el = document.getElementById(`row-${highlightId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.style.backgroundColor = '#e6f4ff';
-          el.style.transition = 'background-color 0.5s ease';
-          setTimeout(() => {
-            el.style.backgroundColor = '';
-          }, 2000);
-        }
-      }, 300);
-      sessionStorage.removeItem('highlightRow');
-    }
-  }, [store.rows]);
+  useHighlightRow(store.rows);
 
   const rows = store.rows.filter(
     (row) =>
@@ -2250,23 +2237,7 @@ export function InvoicesPage() {
     })).catch(console.error);
   }, [store.rows, store.editing]);
 
-  useEffect(() => {
-    const highlightId = sessionStorage.getItem('highlightRow');
-    if (highlightId && store.rows.some(r => r.id === highlightId)) {
-      setTimeout(() => {
-        const el = document.getElementById(`row-${highlightId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.style.backgroundColor = '#e6f4ff';
-          el.style.transition = 'background-color 0.5s ease';
-          setTimeout(() => {
-            el.style.backgroundColor = '';
-          }, 2000);
-        }
-      }, 300);
-      sessionStorage.removeItem('highlightRow');
-    }
-  }, [store.rows]);
+  useHighlightRow(store.rows);
 
   const rows = store.rows.filter(
     (row) =>

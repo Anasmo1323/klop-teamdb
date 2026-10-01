@@ -123,8 +123,11 @@ export function GlobalSearchModal({ open, onClose }: { open: boolean, onClose: (
   if (!open) return null;
 
   const navigateTo = (tab: string, id: string) => {
-    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: tab }));
     sessionStorage.setItem("highlightRow", id);
+    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: tab }));
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("highlight-row", { detail: id }));
+    }, 100);
     onClose();
   };
 
