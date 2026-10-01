@@ -824,6 +824,28 @@ function AddRecordPanel({
                   </option>
                 ))}
               </select>
+            ) : field.type === "date" ? (
+              <DatePicker
+                selected={values[field.name] ? new Date(`${values[field.name]}T00:00:00`) : null}
+                onChange={(date: Date | null) => {
+                  if (date) {
+                    const y = date.getFullYear();
+                    const m = String(date.getMonth() + 1).padStart(2, "0");
+                    const d = String(date.getDate()).padStart(2, "0");
+                    onChange(field.name, `${y}-${m}-${d}`);
+                  } else {
+                    onChange(field.name, "");
+                  }
+                }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="dd/mm/yyyy"
+                customInput={
+                  <Input
+                    style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
+                    required={field.required}
+                  />
+                }
+              />
             ) : (
               <Input
                 style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
@@ -878,30 +900,30 @@ function EditableInput({
   step?: string | number;
   onChange: (value: string) => void;
 }) {
-  const [localDate, setLocalDate] = useState(() => {
-    if (type === "date" && typeof value === "string") {
-      const parts = value.split("-");
-      if (parts.length === 3) return `${parts[2]}${parts[1]}${parts[0]}`;
-    }
-    return "";
-  });
-
   if (type === "date") {
+    const dateObj = typeof value === "string" && value ? new Date(`${value}T00:00:00`) : null;
+    const isValid = dateObj && !isNaN(dateObj.getTime());
+    
     return (
-      <Input
-        style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
-        type="text"
-        placeholder="DDMMYYYY"
-        value={localDate}
-        onChange={(event) => {
-          let val = event.target.value.replace(/\D/g, "").slice(0, 8);
-          setLocalDate(val);
-          if (val.length === 8) {
-            onChange(`${val.slice(4, 8)}-${val.slice(2, 4)}-${val.slice(0, 2)}`);
-          } else if (val.length === 0) {
+      <DatePicker
+        selected={isValid ? dateObj : null}
+        onChange={(date: Date | null) => {
+          if (date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            onChange(`${y}-${m}-${d}`);
+          } else {
             onChange("");
           }
         }}
+        dateFormat="dd/MM/yyyy"
+        placeholderText="dd/mm/yyyy"
+        customInput={
+          <Input
+            style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
+          />
+        }
       />
     );
   }
