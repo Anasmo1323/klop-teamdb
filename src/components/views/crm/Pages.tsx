@@ -2310,7 +2310,7 @@ export function InvoicesPage() {
             {
               name: "status",
               label: "Status",
-              options: ["Draft", "Sent", "Overdue", "Paid"],
+              options: ["Draft", "Sent", "Paid"],
             },
             {
               name: "issueDate",
@@ -2457,7 +2457,7 @@ export function InvoicesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {["Draft", "Sent", "Overdue", "Paid"].map((value) => (
+                          {["Draft", "Sent", "Paid"].map((value) => (
                             <SelectItem key={value} value={value}>
                               {value}
                             </SelectItem>
@@ -3262,7 +3262,7 @@ export function SetupPage() {
             "PO statuses",
             ["Pending", "Approved", "Shipped", "Delivered", "Cancelled"],
           ],
-          ["Invoice statuses", ["Draft", "Sent", "Overdue", "Paid"]],
+          ["Invoice statuses", ["Draft", "Sent", "Paid"]],
           ["Team statuses", ["Active", "Setup"]],
         ].map(([label, values]) => (
           <section className="crm-card" key={label as string}>
