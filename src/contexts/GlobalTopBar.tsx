@@ -59,14 +59,27 @@ export function GlobalTopBar() {
     setIsEditingRates(true);
   };
 
-  const handleSaveRates = async () => {
-    const eur = parseFloat(editEur);
-    const usd = parseFloat(editUsd);
+  const handleSaveRates = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    console.log("handleSaveRates called! Current values:", { editEur, editUsd });
+    
+    const eurStr = editEur.replace(',', '.');
+    const usdStr = editUsd.replace(',', '.');
+    
+    const eur = parseFloat(eurStr);
+    const usd = parseFloat(usdStr);
+    
+    console.log("Parsed values:", { eur, usd });
     
     if (!isNaN(eur) && !isNaN(usd) && eur > 0 && usd > 0) {
+      console.log("Validation passed! Calling updateCustomRates...");
       setIsSavingRates(true);
       try {
         await updateCustomRates(usd, eur);
+        console.log("updateCustomRates succeeded!");
         setIsEditingRates(false);
         toast.success("Exchange rates updated successfully");
       } catch (error: any) {
@@ -76,6 +89,7 @@ export function GlobalTopBar() {
         setIsSavingRates(false);
       }
     } else {
+      console.log("Validation failed!");
       toast.error("Please enter valid numbers greater than 0");
     }
   };
@@ -108,11 +122,10 @@ export function GlobalTopBar() {
                   <span className="text-sm">🇪🇺</span>
                   <span className="text-xs font-semibold text-blue-900">1 EUR =</span>
                   <Input 
-                    type="number"
+                    type="text"
                     value={editEur} 
                     onChange={(e) => setEditEur(e.target.value)}
                     className="h-6 w-20 px-1.5 text-xs font-bold bg-white text-blue-900 border-blue-200"
-                    step="0.0001"
                   />
                 </div>
                 <div className="w-px h-4 bg-blue-200 mx-1"></div>
@@ -120,11 +133,10 @@ export function GlobalTopBar() {
                   <span className="text-sm">🇺🇸</span>
                   <span className="text-xs font-semibold text-blue-900">1 USD =</span>
                   <Input 
-                    type="number"
+                    type="text"
                     value={editUsd} 
                     onChange={(e) => setEditUsd(e.target.value)}
                     className="h-6 w-20 px-1.5 text-xs font-bold bg-white text-blue-900 border-blue-200"
-                    step="0.0001"
                   />
                 </div>
                 <div className="flex items-center gap-1 ml-2 border-l border-blue-200 pl-2">

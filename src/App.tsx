@@ -12,6 +12,7 @@ import { SettingsView } from "./components/views/SettingsView";
 import { ExchangeRatesProvider } from "./contexts/ExchangeRatesContext";
 import { GlobalTopBar } from "./contexts/GlobalTopBar";
 import { LoginView } from "./components/views/LoginView";
+import { Toaster } from "./components/ui/sonner";
 import { DashboardPage, TargetsPage, ForecastPage, PipelinesPage, PurchaseOrdersPage, InvoicesPage, SalesTeamPage, SetupPage } from "./components/views/crm/Pages";
 import { CrmShell } from "./components/views/crm/CrmShell";
 
@@ -281,6 +282,7 @@ function App() {
           </div>
         )}
       </main>
+      <Toaster />
     </div>
     </ExchangeRatesProvider>
   );
