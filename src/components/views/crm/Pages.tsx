@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, useMemo, type FormEvent, type ReactNode } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "sonner";
@@ -732,7 +732,7 @@ function DataTable({
       {editing && (
         <div className="ct-edit-banner">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Edit mode أ¢â‚¬â€‌ double-click any cell to edit. Hit Save changes when done.
+          Edit mode — double-click any cell to edit. Hit Save changes when done.
         </div>
       )}
       {loading && (
@@ -3559,16 +3559,7 @@ export function UpaContractsPage() {
             </label>
             <label className="crm-field">
               <span>Expected collection period</span>
-              <DatePicker
-                selected={draft.expectedCollectionPeriod ? new Date(`${draft.expectedCollectionPeriod}T00:00:00`) : null}
-                onChange={(date: Date | null) => setDraft(p => ({ ...p, expectedCollectionPeriod: date ? toLocalISO(date) : "" }))}
-                dateFormat="dd-MM-yyyy"
-                placeholderText="Select date"
-                showMonthDropdown
-                showYearDropdown
-                dropdownMode="select"
-                className="w-full h-9 px-3 text-[13px] border border-[var(--border)] rounded-[var(--radius-sm)] bg-[var(--surface)] outline-none cursor-pointer"
-              />
+              <Input type="date" value={draft.expectedCollectionPeriod} onChange={(e) => setDraft(p => ({ ...p, expectedCollectionPeriod: e.target.value }))} />
             </label>
             <label className="crm-field">
               <span>Status</span>
@@ -3653,20 +3644,9 @@ export function UpaContractsPage() {
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-ecp`)}>
                     {store.editingCell === `${row.id}-ecp` ? (
-                      <DatePicker
-                        selected={row.expectedCollectionPeriod ? new Date(`${row.expectedCollectionPeriod}T00:00:00`) : null}
-                        onChange={(date: Date | null) => {
-                          store.updateRow(originalIndex, { expectedCollectionPeriod: date ? toLocalISO(date) : "" });
-                          store.startEditingCell("");
-                        }}
-                        dateFormat="dd-MM-yyyy"
-                        placeholderText="Select date"
-                        showMonthDropdown
-                        showYearDropdown
-                        dropdownMode="select"
-                        autoFocus
-                        className="w-[110px] text-[12px] bg-transparent outline-none border-none cursor-pointer"
-                      />
+                      <Input autoFocus type="date" value={row.expectedCollectionPeriod}
+                        onChange={(e) => store.updateRow(originalIndex, { expectedCollectionPeriod: e.target.value })}
+                        onBlur={() => store.startEditingCell("")} style={{ height: 28, fontSize: 13 }} />
                     ) : (row.expectedCollectionPeriod ? formatDate(row.expectedCollectionPeriod) : <span style={{ color: "#b0bac8" }}>-</span>)}
                   </td>
                   <td style={{ fontWeight: 600 }}>{formatCurrency(row.commissionValue)}</td>
