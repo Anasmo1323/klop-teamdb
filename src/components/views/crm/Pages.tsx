@@ -2222,6 +2222,8 @@ export function InvoicesPage() {
   const store = useEditableRows<InvoiceRow>("medsales-invoices", []);
 
   useEffect(() => {
+    if (store.editing) return;
+
     let changed = false;
     const now = new Date();
     now.setHours(0,0,0,0);
@@ -2259,7 +2261,7 @@ export function InvoicesPage() {
         await updateDoc(doc(db, "medsales-invoices", row.id), { status: newStatus, daysOverdue: newDays });
       }
     })).catch(console.error);
-  }, [store.rows]);
+  }, [store.rows, store.editing]);
 
   useEffect(() => {
     const highlightId = sessionStorage.getItem('highlightRow');
