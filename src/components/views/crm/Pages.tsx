@@ -1405,7 +1405,6 @@ export function ForecastPage() {
         code: deal.code,
         id: newId,
         client: deal.client,
-        rep: "—",
         amount: deal.amount,
         status: "Pending",
         orderDate: new Date().toISOString().split('T')[0],
@@ -1421,7 +1420,10 @@ export function ForecastPage() {
       toast.error("Error converting to PO: " + e.message);
     }
   };
+  
   const store = useEditableRows("medsales-forecast", deals);
+  const targetStore = useEditableRows("medsales-targets", []);
+  const productLineOptions = Array.from(new Set(targetStore.rows.map((r: any) => r.productLine).filter(Boolean))) as string[];
   const rows = store.rows.filter(
     (row) =>
       row.client.toLowerCase().includes(search.toLowerCase()) &&
@@ -1545,7 +1547,7 @@ export function ForecastPage() {
           title="Add pipeline record"
           fields={[
             { name: "code", label: "Hospital Code", required: false },
-            { name: "productLine", label: "Product line", required: true },
+            { name: "productLine", label: "Product line", options: productLineOptions, required: true },
             { name: "client", label: "Client", required: true },
             { name: "product", label: "Product", required: true },
             { name: "stage", label: "Stage", options: stageOrder },
@@ -1655,12 +1657,23 @@ export function ForecastPage() {
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-3`)}>
                     {store.editingCell === `${row.id}-${3}` ? (
-                      <EditableInput
+                      <Select
                         value={row.productLine ?? row.product}
-                        onChange={(value) =>
+                        onValueChange={(value) =>
                           store.updateRow(originalIndex, { productLine: value })
                         }
-                      />
+                      >
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {productLineOptions.map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       (row.productLine ?? row.product)
                     )}

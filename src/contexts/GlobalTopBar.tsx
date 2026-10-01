@@ -6,8 +6,10 @@ import { signOut } from "firebase/auth";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { toast } from "sonner";
+import { GlobalSearchModal } from "../components/views/crm/GlobalSearchModal";
 
 export function GlobalTopBar() {
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const { eurToEgp, usdToEgp, loading, isCustom, updateCustomRates } = useExchangeRates();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -32,8 +34,7 @@ export function GlobalTopBar() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "contacts" }));
-        setTimeout(() => window.dispatchEvent(new CustomEvent("focus-search")), 100);
+        setSearchModalOpen(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -41,8 +42,7 @@ export function GlobalTopBar() {
   }, []);
 
   const handleSearchClick = () => {
-    window.dispatchEvent(new CustomEvent("navigate-tab", { detail: "contacts" }));
-    setTimeout(() => window.dispatchEvent(new CustomEvent("focus-search")), 100);
+    setSearchModalOpen(true);
   };
 
   const handleLogout = async () => {
@@ -243,6 +243,8 @@ export function GlobalTopBar() {
           )}
         </div>
       </div>
+      
+      <GlobalSearchModal open={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
     </div>
   );
 }
