@@ -730,20 +730,32 @@ function DataTable({
   children,
   onDoubleClick,
   editing,
+  loading,
 }: {
   children: ReactNode;
   onDoubleClick?: () => void;
   editing?: boolean;
+  loading?: boolean;
 }) {
   return (
-    <div className={`ct-table-wrap${editing ? " ct-editing" : ""}`} onDoubleClick={onDoubleClick}>
+    <div className={`ct-table-wrap relative ${editing ? " ct-editing" : ""}`} onDoubleClick={onDoubleClick}>
       {editing && (
         <div className="ct-edit-banner">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Edit mode — double-click any cell to edit. Hit Save changes when done.
         </div>
       )}
-      <table className="ct-table">{children}</table>
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 backdrop-blur-[1px] min-h-[150px]">
+          <svg className="animate-spin h-8 w-8 text-[#2563eb]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      )}
+      <div className="ct-table-container">
+        <table className="ct-table">{children}</table>
+      </div>
     </div>
   );
 }
@@ -1167,7 +1179,7 @@ export function TargetsPage() {
       </div>
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
-<DataTable editing={store.editing}>
+<DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
@@ -1528,7 +1540,7 @@ export function ForecastPage() {
       </div>
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
-        <DataTable editing={store.editing}>
+        <DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="Code" sortKey="code" sortConfig={sortConfig} requestSort={requestSort} />
@@ -1959,7 +1971,7 @@ export function PurchaseOrdersPage() {
       )}
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
-        <DataTable editing={store.editing}>
+        <DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="PO" sortKey="id" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2386,7 +2398,7 @@ export function InvoicesPage() {
       </div>
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
-        <DataTable editing={store.editing}>
+        <DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="Invoice" sortKey="id" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2889,7 +2901,7 @@ export function PipelinesPage() {
           </div>
           <AdminBadge />
         </div>
-        <DataTable editing={store.editing}>
+        <DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="Deal" sortKey="deal" sortConfig={sortConfig} requestSort={requestSort} />
@@ -3093,7 +3105,7 @@ export function SalesTeamPage() {
       )}
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
-<DataTable editing={store.editing}>
+<DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="Rep" sortKey="rep" sortConfig={sortConfig} requestSort={requestSort} />

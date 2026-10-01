@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 export function useFirebaseRows<T extends { id?: string }>(collectionName: string, initialRows: T[]) {
   const [rows, setRows] = useState<T[]>(initialRows);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const startEditingCell = (cellId: string) => { setEditingCell(cellId); setEditing(true); };
@@ -17,11 +18,13 @@ export function useFirebaseRows<T extends { id?: string }>(collectionName: strin
       if (snapshot.empty && !isLoaded.current) {
         // If empty on first load, we keep initialRows (mock data)
         isLoaded.current = true;
+        setLoading(false);
         return;
       }
       const fetchedRows = snapshot.docs.map((d) => ({ ...d.data(), id: d.id })) as T[];
       setRows(fetchedRows);
       isLoaded.current = true;
+      setLoading(false);
     });
     return () => unsubscribe();
   }, [collectionName]);
@@ -94,6 +97,7 @@ export function useFirebaseRows<T extends { id?: string }>(collectionName: strin
   };
 
   return {
+    loading,
     editingCell,
     startEditingCell, rows, editing, setEditing, updateRow, addRow, deleteRow, save, reset, saved };
 }
