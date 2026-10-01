@@ -878,6 +878,34 @@ function EditableInput({
   step?: string | number;
   onChange: (value: string) => void;
 }) {
+  const [localDate, setLocalDate] = useState(() => {
+    if (type === "date" && typeof value === "string") {
+      const parts = value.split("-");
+      if (parts.length === 3) return `${parts[2]}${parts[1]}${parts[0]}`;
+    }
+    return "";
+  });
+
+  if (type === "date") {
+    return (
+      <Input
+        style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}
+        type="text"
+        placeholder="DDMMYYYY"
+        value={localDate}
+        onChange={(event) => {
+          let val = event.target.value.replace(/\D/g, "").slice(0, 8);
+          setLocalDate(val);
+          if (val.length === 8) {
+            onChange(`${val.slice(4, 8)}-${val.slice(2, 4)}-${val.slice(0, 2)}`);
+          } else if (val.length === 0) {
+            onChange("");
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <Input
       style={{ height: 34, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", padding: "0 10px", fontSize: 13, outline: "none", width: "100%", background: "var(--surface)" }}

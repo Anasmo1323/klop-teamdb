@@ -690,5 +690,7 @@ export function formatCurrencyEGP(value: number, compact = false) {
 
 export function formatDate(value?: string) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+  const date = new Date(`${value}T00:00:00`);
+  if (isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date);
 }
