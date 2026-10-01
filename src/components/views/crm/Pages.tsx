@@ -2470,11 +2470,9 @@ export function InvoicesPage() {
                     ) : (
                       <div className="flex items-center gap-2">
                         <span>{formatCurrency(row.downPayment ?? 0, true)}</span>
-                        {row.amount > 0 && (row.downPayment ?? 0) > 0 && (
-                          <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                            {Math.round(((row.downPayment ?? 0) / row.amount) * 100)}%
-                          </span>
-                        )}
+                        <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                          {row.amount > 0 ? Math.round(((row.downPayment ?? 0) / row.amount) * 100) : 0}%
+                        </span>
                       </div>
                     )}
                   </td>
