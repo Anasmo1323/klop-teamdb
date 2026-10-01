@@ -26,7 +26,6 @@ export type PurchaseOrderRow = {
   code?: string;
   id: string;
   client: string;
-  rep: string;
   amount: number;
   status: "Pending" | "Approved" | "Shipped" | "Delivered" | "Cancelled";
   orderDate: string;

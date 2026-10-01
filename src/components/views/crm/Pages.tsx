@@ -1801,7 +1801,6 @@ export function PurchaseOrdersPage() {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
-    rep: "",
     amount: "",
     status: "Pending",
     orderDate: "",
@@ -1866,13 +1865,12 @@ export function PurchaseOrdersPage() {
 
   const rows = store.rows.filter(
     (row) =>
-      (row.client + row.rep).toLowerCase().includes(search.toLowerCase()) &&
+      (row.client + row.id).toLowerCase().includes(search.toLowerCase()) &&
       (filter === "All statuses" || row.status === filter),
   );
   const exportRows = store.rows.map((row) => [
     row.id,
     row.client,
-    row.rep,
     row.amount,
     row.status,
     row.orderDate,
@@ -1882,20 +1880,18 @@ export function PurchaseOrdersPage() {
   const addRecord = () => {
     if (
       !draft.client.trim() ||
-      !draft.rep.trim() ||
       !draft.orderDate ||
       !draft.deliveryDate ||
       !draft.followUp.trim()
     ) {
       toast.error(
-        "Enter the client, owner, dates, and follow-up before adding the purchase order.",
+        "Enter the client, dates, and follow-up before adding the purchase order.",
       );
       return;
     }
     store.addRow({
       id: createRecordId("PO", store.rows),
       client: draft.client.trim(),
-      rep: draft.rep.trim(),
       amount: Number(draft.amount) || 0,
       status: draft.status as PurchaseOrderRow["status"],
       orderDate: draft.orderDate,
@@ -1904,7 +1900,6 @@ export function PurchaseOrdersPage() {
     });
     setDraft({
       client: "",
-      rep: "",
       amount: "",
       status: "Pending",
       orderDate: "",
@@ -1943,7 +1938,6 @@ export function PurchaseOrdersPage() {
               headers={[
                 "PO",
                 "Client",
-                "Owner",
                 "Amount",
                 "Status",
                 "Order date",
@@ -1986,7 +1980,6 @@ export function PurchaseOrdersPage() {
           title="Add purchase order"
           fields={[
             { name: "client", label: "Client", required: true },
-            { name: "rep", label: "Owner", required: true },
             {
               name: "amount",
               label: "Amount",
@@ -2034,7 +2027,6 @@ export function PurchaseOrdersPage() {
             <tr>
               <SortableHeader label="PO" sortKey="id" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Client" sortKey="client" sortConfig={sortConfig} requestSort={requestSort} />
-              <SortableHeader label="Owner" sortKey="owner" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Amount" sortKey="amount" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Order date" sortKey="orderDate" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2072,18 +2064,6 @@ export function PurchaseOrdersPage() {
                       />
                     ) : (
                       row.client
-                    )}
-                  </td>
-                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-3`)}>
-                    {store.editingCell === `${row.id}-${3}` ? (
-                      <EditableInput
-                        value={row.rep}
-                        onChange={(value) =>
-                          store.updateRow(originalIndex, { rep: value })
-                        }
-                      />
-                    ) : (
-                      row.rep
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-4`)}>
