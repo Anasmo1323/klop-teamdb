@@ -2247,7 +2247,6 @@ export function InvoicesPage() {
   const exportRows = store.rows.map((row) => [
     row.id,
     row.client,
-    row.po,
     row.amount,
     row.downPayment ?? 0,
     row.status,
@@ -2271,7 +2270,6 @@ export function InvoicesPage() {
     store.addRow({
       id: createRecordId("INV", store.rows),
       client: draft.client.trim(),
-      po: draft.po.trim() || "—",
       amount: Number(draft.amount) || 0,
       downPayment: Number(draft.downPayment) || 0,
       status: draft.status as InvoiceRow["status"],
@@ -2282,7 +2280,6 @@ export function InvoicesPage() {
     });
     setDraft({
       client: "",
-      po: "—",
       amount: "",
       downPayment: "",
       status: "Draft",
@@ -2317,7 +2314,6 @@ export function InvoicesPage() {
               headers={[
                 "Invoice",
                 "Client",
-                "PO",
                 "Amount",
                 "Down payment",
                 "Status",
@@ -2345,7 +2341,6 @@ export function InvoicesPage() {
           title="Add invoice"
           fields={[
             { name: "client", label: "Client", required: true },
-            { name: "po", label: "Purchase order" },
             {
               name: "amount",
               label: "Amount",
@@ -2421,7 +2416,6 @@ export function InvoicesPage() {
             <tr>
               <SortableHeader label="Invoice" sortKey="id" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Client" sortKey="client" sortConfig={sortConfig} requestSort={requestSort} />
-              <SortableHeader label="PO" sortKey="orderId" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Amount" sortKey="amount" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Down payment" sortKey="downPayment" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2478,18 +2472,6 @@ export function InvoicesPage() {
                       />
                     ) : (
                       row.client
-                    )}
-                  </td>
-                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-3`)}>
-                    {store.editingCell === `${row.id}-${3}` ? (
-                      <EditableInput
-                        value={row.po}
-                        onChange={(value) =>
-                          store.updateRow(originalIndex, { po: value })
-                        }
-                      />
-                    ) : (
-                      row.po
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-4`)}>
