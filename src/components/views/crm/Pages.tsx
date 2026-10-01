@@ -249,11 +249,14 @@ export function DashboardPage() {
       return row.closeDate >= dateRange.from && row.closeDate <= dateRange.to;
     });
   }, [pipelineStore.rows, dateRange]);
+  const invoiceStore = useEditableRows<InvoiceRow>("medsales-invoices", []);
+
   const dashboardTargetTotal = targetStore.rows.reduce(
     (sum, row) => sum + row.target,
     0,
   );
-  const dashboardAchieved = filteredDeals.filter((row) => row.stage === "Closed Won")
+  const dashboardAchieved = invoiceStore.rows
+    .filter((row) => row.status === "Paid" && (!row.issueDate || (row.issueDate >= dateRange.from && row.issueDate <= dateRange.to)))
     .reduce((sum, row) => sum + row.amount, 0);
   const dashboardAttainment = dashboardTargetTotal
     ? dashboardAchieved / dashboardTargetTotal
@@ -266,6 +269,9 @@ export function DashboardPage() {
     (row) =>
       !["Closed Won", "Closed Lost"].includes(row.stage) && row.amount > 0,
   ).length;
+  const dashboardOverdueExposure = invoiceStore.rows
+    .filter((row) => row.status === "Overdue" || row.status === "Sent")
+    .reduce((sum, row) => sum + row.amount, 0);
   const topAttention = attentionItems;
   const dashboardExportRows = [
     [
@@ -278,8 +284,8 @@ export function DashboardPage() {
       dashboardOpenPipeline,
       `${dashboardActiveDeals} active deals`,
     ],
-    ["Won deals", dashboardWeightedPipeline, "Probability-adjusted open value"],
-    ["Invoices", overdueExposure, "Sent + overdue exposure"],
+    ["Weighted pipeline", dashboardWeightedPipeline, "Probability-adjusted open value"],
+    ["Invoices at risk", dashboardOverdueExposure, "Sent + overdue exposure"],
   ];
 
   const handleSeed = async () => {
@@ -311,18 +317,29 @@ export function DashboardPage() {
       if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
       lines[line].target += row.target;
     });
-    filteredDeals.filter((row) => row.stage === "Closed Won")
-      .forEach((row) => {
-        const line = row.productLine ?? row.product ?? "Other";
-        if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
-        lines[line].achieved += row.amount;
+
+    // Create a map of deal code to product line
+    const dealCodeToLine: Record<string, string> = {};
+    pipelineStore.rows.forEach(d => {
+      if (d.code) dealCodeToLine[d.code] = d.productLine ?? d.product ?? "Other";
+    });
+
+    invoiceStore.rows
+      .filter((inv) => inv.status === "Paid" && (!inv.issueDate || (inv.issueDate >= dateRange.from && inv.issueDate <= dateRange.to)))
+      .forEach((inv) => {
+        if (inv.code && dealCodeToLine[inv.code]) {
+          const line = dealCodeToLine[inv.code];
+          if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
+          lines[line].achieved += inv.amount;
+        }
       });
+
     return Object.entries(lines).map(([line, v]) => ({
       line,
       target: v.target,
       achieved: v.achieved,
     }));
-  }, [targetStore.rows, pipelineStore.rows]);
+  }, [targetStore.rows, pipelineStore.rows, invoiceStore.rows, dateRange]);
 
   // 2. Pipeline by stage — all stages including Closed Lost
   const livePipelineByStage = useMemo(() => {
@@ -344,30 +361,42 @@ export function DashboardPage() {
   };
   const liveMomentum = useMemo(() => {
     const now = new Date();
+    
+    // Map for Deal margins
+    const dealCodeToMargin: Record<string, number> = {};
+    pipelineStore.rows.forEach(d => {
+      if (d.code) dealCodeToMargin[d.code] = d.margin ?? 0.3; // Default 30% margin if unknown
+    });
+
     return Array.from({ length: 9 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - 8 + i, 1);
       const yr = d.getFullYear();
       const mo = d.getMonth();
       const label = d.toLocaleString("en-US", { month: "short" });
-      const wonDeals = filteredDeals.filter((row) => {
-        if (row.stage !== "Closed Won" || !row.closeDate) return false;
-        const cd = new Date(row.closeDate);
+      
+      const paidInvoices = invoiceStore.rows.filter((row) => {
+        if (row.status !== "Paid" || !row.issueDate) return false;
+        const cd = new Date(row.issueDate);
         return cd.getFullYear() === yr && cd.getMonth() === mo;
       });
+
       const openDeals = filteredDeals.filter((row) => {
         if (["Closed Won", "Closed Lost"].includes(row.stage)) return false;
-        if (!row.closeDate) return true;
+        if (!row.closeDate) return true; // Include deals without date
         const cd = new Date(row.closeDate);
         return cd.getFullYear() === yr && cd.getMonth() === mo;
       });
       return {
         month: label,
-        achieved: wonDeals.reduce((s, r) => s + r.amount, 0),
+        achieved: paidInvoices.reduce((s, r) => s + r.amount, 0),
         pipeline: openDeals.reduce((s, r) => s + r.amount, 0),
-        collected: wonDeals.reduce((s, r) => s + r.amount * r.margin, 0),
+        collected: paidInvoices.reduce((s, r) => {
+          const margin = (r.code && dealCodeToMargin[r.code]) ? dealCodeToMargin[r.code] : 0.3;
+          return s + r.amount * margin;
+        }, 0),
       };
     });
-  }, [pipelineStore.rows]);
+  }, [pipelineStore.rows, invoiceStore.rows]);
 
   return (
     <PageFrame>
@@ -425,16 +454,16 @@ export function DashboardPage() {
           trend="+8.1%"
         />
         <StatCard
-          label="Won deals"
+          label="Weighted pipeline"
           value={formatCurrency(dashboardWeightedPipeline, true)}
           helper="Probability-adjusted open value"
           accent="amber"
           trend="+5.6%"
         />
         <StatCard
-          label="Invoices"
-          value={formatCurrency(overdueExposure, true)}
-          helper={`${invoices.filter((row) => row.status !== "Paid").length} invoices outside paid status`}
+          label="Invoices at risk"
+          value={formatCurrency(dashboardOverdueExposure, true)}
+          helper={`${invoiceStore.rows.filter((row) => row.status === "Overdue" || row.status === "Sent").length} sent or overdue invoices`}
           accent="rose"
           trend="-4.2%"
         />
@@ -654,7 +683,7 @@ export function DashboardPage() {
                 />
                 <Area
                   type="monotone"
-                  name="Won Revenue"
+                  name="Revenue Achieved"
                   dataKey="achieved"
                   stroke="#2a9d8f"
                   fill="url(#revenueFill)"
@@ -1093,7 +1122,7 @@ export function TargetsPage() {
 
   const store = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
-  const invoiceStore = useEditableRows("medsales-invoices", []);
+  const invoiceStore = useEditableRows<InvoiceRow>("medsales-invoices", []);
   useHighlightRow(store.rows);
 
   const getComputedAchieved = (productLine: string) => {
@@ -1837,7 +1866,6 @@ export function PurchaseOrdersPage() {
         code: po.code,
         id: newId,
         client: po.client,
-        po: po.id,
         amount: po.amount,
         status: "Draft",
         issueDate: new Date().toISOString().split('T')[0],
