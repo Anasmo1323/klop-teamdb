@@ -839,6 +839,9 @@ function AddRecordPanel({
                 }}
                 dateFormat="dd/MM/yyyy"
                 placeholderText="dd/mm/yyyy"
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 portalId="root"
                 customInput={
                   <Input
@@ -920,6 +923,9 @@ function EditableInput({
         }}
         dateFormat="dd/MM/yyyy"
         placeholderText="dd/mm/yyyy"
+        showMonthDropdown
+        showYearDropdown
+        dropdownMode="select"
         portalId="root"
         customInput={
           <Input
