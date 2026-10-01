@@ -2142,6 +2142,7 @@ export function InvoicesPage() {
     client: "",
     po: "—",
     amount: "",
+    downPayment: "",
     status: "Draft",
     issueDate: "",
     dueDate: "",
@@ -2207,6 +2208,7 @@ export function InvoicesPage() {
     row.client,
     row.po,
     row.amount,
+    row.downPayment ?? 0,
     row.status,
     row.issueDate,
     row.dueDate,
@@ -2230,6 +2232,7 @@ export function InvoicesPage() {
       client: draft.client.trim(),
       po: draft.po.trim() || "—",
       amount: Number(draft.amount) || 0,
+      downPayment: Number(draft.downPayment) || 0,
       status: draft.status as InvoiceRow["status"],
       issueDate: draft.issueDate,
       dueDate: draft.dueDate,
@@ -2240,6 +2243,7 @@ export function InvoicesPage() {
       client: "",
       po: "—",
       amount: "",
+      downPayment: "",
       status: "Draft",
       issueDate: "",
       dueDate: "",
@@ -2274,6 +2278,7 @@ export function InvoicesPage() {
                 "Client",
                 "PO",
                 "Amount",
+                "Down payment",
                 "Status",
                 "Issue date",
                 "Due date",
@@ -2303,6 +2308,13 @@ export function InvoicesPage() {
             {
               name: "amount",
               label: "Amount",
+              type: "number",
+              min: 0,
+              step: 1,
+            },
+            {
+              name: "downPayment",
+              label: "Down payment",
               type: "number",
               min: 0,
               step: 1,
@@ -2370,6 +2382,7 @@ export function InvoicesPage() {
               <SortableHeader label="Client" sortKey="client" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="PO" sortKey="orderId" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Amount" sortKey="amount" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Down payment" sortKey="downPayment" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Due date" sortKey="dueDate" sortConfig={sortConfig} requestSort={requestSort} />
               <SortableHeader label="Days overdue" sortKey="daysOverdue" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2445,6 +2458,21 @@ export function InvoicesPage() {
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-5`)}>
                     {store.editingCell === `${row.id}-${5}` ? (
+                      <EditableInput
+                        type="number"
+                        value={row.downPayment ?? 0}
+                        onChange={(value) =>
+                          store.updateRow(originalIndex, {
+                            downPayment: Number(value) || 0,
+                          })
+                        }
+                      />
+                    ) : (
+                      formatCurrency(row.downPayment ?? 0, true)
+                    )}
+                  </td>
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-6`)}>
+                    {store.editingCell === `${row.id}-${6}` ? (
                       <Select
                         value={row.status}
                         onValueChange={(value) =>
@@ -2468,8 +2496,8 @@ export function InvoicesPage() {
                       <StatusBadge status={row.status} />
                     )}
                   </td>
-                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-6`)}>
-                    {store.editingCell === `${row.id}-${6}` ? (
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-7`)}>
+                    {store.editingCell === `${row.id}-${7}` ? (
                       <EditableInput
                         type="date"
                         value={row.dueDate}
@@ -2481,8 +2509,8 @@ export function InvoicesPage() {
                       formatDate(row.dueDate)
                     )}
                   </td>
-                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-7`)}>
-                    {store.editingCell === `${row.id}-${7}` ? (
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-8`)}>
+                    {store.editingCell === `${row.id}-${8}` ? (
                       <EditableInput
                         type="number"
                         value={row.daysOverdue}
@@ -2496,8 +2524,8 @@ export function InvoicesPage() {
                       overdueCell
                     )}
                   </td>
-                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-8`)}>
-                    {store.editingCell === `${row.id}-${8}` ? (
+                  <td onDoubleClick={() => store.startEditingCell(`${row.id}-9`)}>
+                    {store.editingCell === `${row.id}-${9}` ? (
                       <EditableInput
                         value={row.followUp}
                         onChange={(value) =>
