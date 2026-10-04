@@ -416,7 +416,7 @@ export function DashboardPage() {
                 dropdownMode="select"
                 className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
               />
-              <span className="text-[12px] font-bold text-[#a0abba] px-1">أ¢â€ â€™</span>
+              <span className="text-[12px] font-bold text-[#a0abba] px-1">→</span>
               <DatePicker
                 selected={dateRange.to ? new Date(`${dateRange.to}T00:00:00`) : null}
                 onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, to: date ? toLocalISO(date) : "" }))}
