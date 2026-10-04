@@ -472,7 +472,7 @@ export function DashboardPage() {
       <div className="crm-dashboard-grid">
         <ChartCard
           title="Achievement by product line"
-          subtitle="Won deals vs target per product line ط¢آ· EUR"
+          subtitle="Won deals vs target per product line · EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
@@ -523,7 +523,7 @@ export function DashboardPage() {
 
         <ChartCard
           title="Pipeline by stage"
-          subtitle="Deal count and total value per stage ط¢آ· EUR"
+          subtitle="Deal count and total value per stage · EUR"
         >
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
@@ -1218,19 +1218,19 @@ export function TargetsPage() {
         <StatCard
           label="Annual target"
           value={formatCurrency(targetTotal, true)}
-          helper={`Sum of Target column ط¢آ· ${formatCurrencyEGP(targetTotal * eurToEgp, true)}`}
+          helper={`Sum of Target column · ${formatCurrencyEGP(targetTotal * eurToEgp, true)}`}
           accent="navy"
         />
         <StatCard
           label="Achieved"
           value={formatCurrency(achievedTotal, true)}
-          helper={`${Math.round(targetAttainment * 100)}% attainment ط¢آ· ${formatCurrencyEGP(achievedTotal * eurToEgp, true)}`}
+          helper={`${Math.round(targetAttainment * 100)}% attainment · ${formatCurrencyEGP(achievedTotal * eurToEgp, true)}`}
           accent="teal"
         />
         <StatCard
           label="Gap to target"
           value={formatCurrency(targetTotal - achievedTotal, true)}
-          helper={`Target minus Won deals ط¢آ· ${formatCurrencyEGP((targetTotal - achievedTotal) * eurToEgp, true)}`}
+          helper={`Target minus Won deals · ${formatCurrencyEGP((targetTotal - achievedTotal) * eurToEgp, true)}`}
           accent="amber"
         />
       </div>
