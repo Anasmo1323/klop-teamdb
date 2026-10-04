@@ -83,7 +83,7 @@ import { db } from "@/firebase";
 import { writeBatch, doc, setDoc, updateDoc, query, getDocs, where, collection } from "firebase/firestore";
 
 const formatCode = (prefix: "PL" | "PO" | "IN", rawCode?: string) => {
-  if (!rawCode) return "أ¢â‚¬â€‌";
+  if (!rawCode) return "—";
   const cleanCode = rawCode.replace(/^(PL-|PO-|IN-)/i, "");
   return `${prefix}-${cleanCode}`;
 };
@@ -107,7 +107,7 @@ function PageFrame({ children }: { children: ReactNode }) {
   );
 }
 
-// Stage pill with dot أ¢â‚¬â€‌ replaces plain StatusBadge for pipeline stages
+// Stage pill with dot — replaces plain StatusBadge for pipeline stages
 const stagePillMap: Record<string, string> = {
   "Cold":          "badge badge-cold",
   "Prospecting":   "badge badge-prospecting",
@@ -308,7 +308,7 @@ export function DashboardPage() {
     }
   };
 
-  // أ¢â€‌â‚¬أ¢â€‌â‚¬ Live chart data computed from firebase rows أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬أ¢â€‌â‚¬
+  // ── Live chart data computed from firebase rows ────────────────────────────
   // 1. Achievement by product line
   const achievementByProductLine = useMemo(() => {
     const lines: Record<string, { target: number; achieved: number }> = {};
@@ -341,7 +341,7 @@ export function DashboardPage() {
     }));
   }, [targetStore.rows, pipelineStore.rows, invoiceStore.rows, dateRange]);
 
-  // 2. Pipeline by stage أ¢â‚¬â€‌ all stages including Closed Lost
+  // 2. Pipeline by stage — all stages including Closed Lost
   const livePipelineByStage = useMemo(() => {
     return stageOrder.map((stage) => ({
       stage,
@@ -351,7 +351,7 @@ export function DashboardPage() {
     }));
   }, [pipelineStore.rows]);
 
-  // 3. Commercial momentum أ¢â‚¬â€‌ live from real deal close dates
+  // 3. Commercial momentum — live from real deal close dates
 
   const getGreeting = () => {
     const hour = parseInt(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Africa/Cairo' }).format(new Date()));
@@ -493,7 +493,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `أ¢â€ڑآ¬${Math.round(value / 1000)}k`
+                    `€${Math.round(value / 1000)}k`
                   }
                 />
                 <Tooltip
@@ -539,7 +539,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `أ¢â€ڑآ¬${Math.round(value / 1_000_000)}M`
+                    `€${Math.round(value / 1_000_000)}M`
                   }
                 />
                 <YAxis
@@ -666,7 +666,7 @@ export function DashboardPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `أ¢â€ڑآ¬${Math.round(value / 1000)}k`
+                    `€${Math.round(value / 1000)}k`
                   }
                 />
                 <Tooltip
@@ -1133,8 +1133,8 @@ export function TargetsPage() {
     }
     store.addRow({
       id: createRecordId("REP", store.rows),
-      rep: "أ¢â‚¬â€‌",
-      region: "أ¢â‚¬â€‌",
+      rep: "—",
+      region: "—",
       focus: draft.productLine.trim() || "To be assigned",
       productLine: draft.productLine.trim() || "To be assigned",
       target: Number(draft.target) || 0,
@@ -1170,9 +1170,9 @@ export function TargetsPage() {
               headers={[
                 "Target ID",
                 "Product Line",
-                "Target (أ¢â€ڑآ¬)",
+                "Target (€)",
                 "Target (EGP)",
-                "Achieved (أ¢â€ڑآ¬)",
+                "Achieved (€)",
                 "Achieved (EGP)",
                 "Progress",
                 "Status",
@@ -1240,9 +1240,9 @@ export function TargetsPage() {
           <thead>
             <tr>
               <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
-              <th>Target (أ¢â€ڑآ¬)</th>
+              <th>Target (€)</th>
               <th>Target (EGP)</th>
-              <th>Achieved (أ¢â€ڑآ¬)</th>
+              <th>Achieved (€)</th>
               <th>Achieved (EGP)</th>
               <th>Progress</th>
               <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
@@ -2172,7 +2172,7 @@ export function InvoicesPage() {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
-    po: "أ¢â‚¬â€‌",
+    po: "—",
     amount: "",
     downPayment: "",
     status: "Draft",
@@ -2434,7 +2434,7 @@ export function InvoicesPage() {
                     {computedDaysOverdue} days
                   </span>
                 ) : (
-                  "أ¢â‚¬â€‌"
+                  "—"
                 );
               return (
                 <tr key={row.id} id={`row-${row.id}`}>
@@ -2768,7 +2768,7 @@ export function PipelinesPage() {
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#8b98aa" }}
                   tickFormatter={(value: number) =>
-                    `أ¢â€ڑآ¬${Math.round(value / 1_000_000)}M`
+                    `€${Math.round(value / 1_000_000)}M`
                   }
                 />
                 <YAxis
@@ -2805,7 +2805,7 @@ export function PipelinesPage() {
         </ChartCard>
         <ChartCard
           title="Gross Profit Analysis"
-          subtitle="Gross profit by stage based on Amount ط£â€” Margin"
+          subtitle="Gross profit by stage based on Amount × Margin"
         >
           <div className="crm-stage-list">
             {livePipelineByStage.map((row) => (
@@ -3179,9 +3179,9 @@ export function SalesTeamPage() {
                       </div>
                     ) : (
                       <>
-                        <div>{row.email ?? "أ¢â‚¬â€‌"}</div>
+                        <div>{row.email ?? "—"}</div>
                         <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
-                          {row.phone ?? "أ¢â‚¬â€‌"}
+                          {row.phone ?? "—"}
                         </div>
                       </>
                     )}
