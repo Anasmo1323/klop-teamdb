@@ -257,8 +257,8 @@ export function DashboardPage() {
     0,
   );
   const dashboardAchieved = invoiceStore.rows
-    .filter((row) => row.status === "Paid" && (!row.issueDate || (row.issueDate >= dateRange.from && row.issueDate <= dateRange.to)))
-    .reduce((sum, row) => sum + row.amount, 0);
+    .filter((row) => (row.invoiceStatus === "Paid" || row.invoiceStatus === "Downpayment") && (!row.issueDate || (row.issueDate >= dateRange.from && row.issueDate <= dateRange.to)))
+    .reduce((sum, row) => sum + (row.invoiceStatus === "Downpayment" ? (row.downPayment || 0) : row.amount), 0);
   const dashboardAttainment = dashboardTargetTotal
     ? dashboardAchieved / dashboardTargetTotal
     : 0;
@@ -271,7 +271,7 @@ export function DashboardPage() {
       !["Closed Won", "Closed Lost"].includes(row.stage) && row.amount > 0,
   ).length;
   const dashboardOverdueExposure = invoiceStore.rows
-    .filter((row) => row.status === "Overdue" || row.status === "Sent")
+    .filter((row) => row.invoiceStatus === "Overdue")
     .reduce((sum, row) => sum + row.amount, 0);
   const dashboardExportRows = [
     [
@@ -284,7 +284,7 @@ export function DashboardPage() {
       dashboardOpenPipeline,
       `${dashboardActiveDeals} active deals`,
     ],
-    ["Weighted pipeline", dashboardWeightedPipeline, "Probability-adjusted open value"],
+    
     ["Invoices at risk", dashboardOverdueExposure, "Sent + overdue exposure"],
   ];
 
@@ -375,7 +375,7 @@ export function DashboardPage() {
       const label = d.toLocaleString("en-US", { month: "short" });
       
       const paidInvoices = invoiceStore.rows.filter((row) => {
-        if (row.status !== "Paid" || !row.issueDate) return false;
+        if (row.invoiceStatus !== "Paid" || !row.issueDate) return false;
         const cd = new Date(row.issueDate);
         return cd.getFullYear() === yr && cd.getMonth() === mo;
       });
@@ -439,31 +439,11 @@ export function DashboardPage() {
       />
 
       <div className="crm-stat-grid">
-        <StatCard
-          label="Revenue achieved"
-          value={formatCurrency(dashboardAchieved, true)}
-          helper={`${Math.round(dashboardAttainment * 100)}% of ${formatCurrency(dashboardTargetTotal, true)} target`}
-          accent="teal"
-          trend="+12.4%"
-        />
-        <StatCard
-          label="Open pipeline"
-          value={formatCurrency(dashboardOpenPipeline, true)}
-          helper={`${dashboardActiveDeals} active deals with value`}
-          accent="navy"
-          trend="+8.1%"
-        />
-        <StatCard
-          label="Weighted pipeline"
-          value={formatCurrency(dashboardWeightedPipeline, true)}
-          helper="Probability-adjusted open value"
-          accent="amber"
-          trend="+5.6%"
-        />
+        
         <StatCard
           label="Invoices at risk"
           value={formatCurrency(dashboardOverdueExposure, true)}
-          helper={`${invoiceStore.rows.filter((row) => row.status === "Overdue" || row.status === "Sent").length} sent or overdue invoices`}
+          helper={`${invoiceStore.rows.filter((row) => row.invoiceStatus === "Overdue").length} overdue invoices`}
           accent="rose"
           trend="-4.2%"
         />
@@ -2191,7 +2171,7 @@ export function InvoicesPage() {
     now.setHours(0,0,0,0);
     
     Promise.all(store.rows.map(async (row) => {
-      let newStatus = row.status;
+      let newStatus = row.invoiceStatus;
       let newDays = row.daysOverdue;
       const down = row.downPayment ?? 0;
       
@@ -2213,14 +2193,14 @@ export function InvoicesPage() {
             if (down > 0 && down < row.amount) {
               newStatus = "Downpayment";
             } else if (newStatus === "Overdue" || newStatus === "Downpayment") {
-              newStatus = "Sent";
+              newStatus = "Issued";
             }
           }
         }
       }
 
-      if (row.status !== newStatus || row.daysOverdue !== newDays) {
-        await updateDoc(doc(db, "medsales-invoices", row.id), { status: newStatus, daysOverdue: newDays });
+      if (row.invoiceStatus !== newStatus || row.daysOverdue !== newDays) {
+        await updateDoc(doc(db, "medsales-invoices", row.id), { invoiceStatus: newStatus, daysOverdue: newDays });
       }
     })).catch(console.error);
   }, [store.rows, store.editing]);
@@ -2230,14 +2210,14 @@ export function InvoicesPage() {
   const rows = store.rows.filter(
     (row) =>
       (row.client + row.id).toLowerCase().includes(search.toLowerCase()) &&
-      (filter === "All statuses" || row.status === filter),
+      (filter === "All statuses" || row.invoiceStatus === filter),
   );
   const exportRows = store.rows.map((row) => [
     row.id,
     row.client,
     row.amount,
     row.downPayment ?? 0,
-    row.status,
+    row.invoiceStatus,
     row.issueDate,
     row.dueDate,
     row.daysOverdue,
@@ -2260,7 +2240,7 @@ export function InvoicesPage() {
       client: draft.client.trim(),
       amount: Number(draft.amount) || 0,
       downPayment: Number(draft.downPayment) || 0,
-      status: draft.status as InvoiceRow["status"],
+      status: draft.invoiceStatus as InvoiceRow["status"],
       issueDate: draft.issueDate,
       dueDate: draft.dueDate,
       daysOverdue: Number(draft.daysOverdue) || 0,
@@ -2500,7 +2480,7 @@ export function InvoicesPage() {
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-6`)}>
                     {store.editingCell === `${row.id}-${6}` ? (
                       <Select
-                        value={row.status}
+                        value={row.invoiceStatus}
                         onValueChange={(value) =>
                           store.updateRow(originalIndex, {
                             status: value as InvoiceRow["status"],
@@ -2519,7 +2499,7 @@ export function InvoicesPage() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <StatusBadge status={row.status} />
+                      <StatusBadge status={row.invoiceStatus} />
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-7`)}>
@@ -3426,7 +3406,7 @@ export function UpaContractsPage() {
   const upaStatuses: UpaContractRow["status"][] = [
     "Pending",
     "In Progress",
-    "signed 2026",
+    "Signed",
     "Delivered",
     "Delivered and Payment Received",
   ];

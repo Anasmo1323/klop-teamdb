@@ -180,6 +180,7 @@ export function GlobalTopBar() {
 
       {/* RIGHT: Search + Avatar */}
       <div className="flex items-center gap-3">
+        <div id="global-save-portal"></div>
         {/* Global Search Trigger (decorative for now, Cmd+K) */}
         <button
           className="hidden sm:flex items-center gap-2 text-sm text-slate-400 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-3 h-8 transition-colors group"

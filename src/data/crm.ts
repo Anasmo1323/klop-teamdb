@@ -27,7 +27,7 @@ export type PurchaseOrderRow = {
   id: string;
   client: string;
   amount: number;
-  status: "Pending" | "Approved" | "Shipped" | "Delivered" | "Cancelled";
+  status: "Pending" | "Approved" | "Shipped" | "Invoiced";
   orderDate: string;
   deliveryDate: string;
   followUp: string;
@@ -39,7 +39,8 @@ export type InvoiceRow = {
   client: string;
   amount: number;
   downPayment?: number;
-  status: "Draft" | "Sent" | "Downpayment" | "Overdue" | "Paid";
+  invoiceStatus: "Issued" | "Downpayment" | "Overdue" | "Paid";
+  shippingStatus?: "In stock" | "Contacted supplier" | "Shipped" | "Delivered to client";
   issueDate: string;
   dueDate: string;
   daysOverdue: number;
@@ -54,7 +55,7 @@ export type UpaContractRow = {
   commissionPct: number;
   expectedCollectionPeriod: string;
   commissionValue: number;
-  status: "Delivered" | "Delivered and Payment Received" | "signed 2026" | "Pending" | "In Progress";
+  status: "Delivered" | "Delivered and Payment Received" | "Signed" | "Pending" | "In Progress";
 };
 
 export const upaContracts: UpaContractRow[] = [
@@ -62,7 +63,7 @@ export const upaContracts: UpaContractRow[] = [
   { id: "UPA-A2", customerName: "UPA A2", supplier: "KLS Martin", contractValue: 695524.63, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 62597.22, status: "Delivered" },
   { id: "UPA-A3", customerName: "UPA A3", supplier: "KLS Martin", contractValue: 955653.93, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 86008.85, status: "Delivered" },
   { id: "UPA-A4", customerName: "UPA A4", supplier: "KLS Martin", contractValue: 2127126.60, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 191441.39, status: "Delivered and Payment Received" },
-  { id: "UPA-A8", customerName: "UPA A8", supplier: "KLS Martin", contractValue: 1974069.01, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 177666.21, status: "signed 2026" },
+  { id: "UPA-A8", customerName: "UPA A8", supplier: "KLS Martin", contractValue: 1974069.01, commissionPct: 0.09, expectedCollectionPeriod: "", commissionValue: 177666.21, status: "Signed" },
 ];
 
 export type TeamRow = {
