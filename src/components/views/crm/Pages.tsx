@@ -1225,7 +1225,8 @@ export function TargetsPage() {
               <th>Achieved (€)</th>
               <th>Achieved (EGP)</th>
               <th>Progress</th>
-              <SortableHeader label="Status" sortKey="status" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Invoice Status" sortKey="invoiceStatus" sortConfig={sortConfig} requestSort={requestSort} />
+              <SortableHeader label="Shipping Status" sortKey="shippingStatus" sortConfig={sortConfig} requestSort={requestSort} />
               <th />
             </tr>
           </thead>
@@ -2269,7 +2270,7 @@ export function InvoicesPage() {
         setSearch={setSearch}
         filter={filter}
         setFilter={setFilter}
-        filterOptions={["All statuses", "Paid", "Sent", "Downpayment", "Overdue", "Draft"]}
+        filterOptions={["All statuses", "Issued", "Paid", "Downpayment", "Overdue"]}
         action={
           <div className="crm-report-actions">
             <Button
