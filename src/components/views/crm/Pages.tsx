@@ -375,7 +375,7 @@ export function DashboardPage() {
       const label = d.toLocaleString("en-US", { month: "short" });
       
       const paidInvoices = invoiceStore.rows.filter((row) => {
-        if (row.invoiceStatus !== "Paid" || !row.issueDate) return false;
+        if ((row.invoiceStatus !== "Paid" && row.invoiceStatus !== "Downpayment") || !row.issueDate) return false;
         const cd = new Date(row.issueDate);
         return cd.getFullYear() === yr && cd.getMonth() === mo;
       });
@@ -388,11 +388,11 @@ export function DashboardPage() {
       });
       return {
         month: label,
-        achieved: paidInvoices.reduce((s, r) => s + r.amount, 0),
+        achieved: paidInvoices.reduce((s, r) => s + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0),
         pipeline: openDeals.reduce((s, r) => s + r.amount, 0),
         collected: paidInvoices.reduce((s, r) => {
           const margin = (r.code && dealCodeToMargin[r.code]) ? dealCodeToMargin[r.code] : 0.3;
-          return s + r.amount * margin;
+          return s + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount) * margin;
         }, 0),
       };
     });
@@ -2347,8 +2347,8 @@ export function InvoicesPage() {
         />
         <StatCard
           label="Collected"
-          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Paid").reduce((sum, r) => sum + r.amount, 0), true)}
-          helper={`${store.rows.reduce((sum, r) => sum + r.amount, 0) > 0 ? Math.round((store.rows.filter(r => r.invoiceStatus === "Paid").reduce((sum, r) => sum + r.amount, 0) / store.rows.reduce((sum, r) => sum + r.amount, 0)) * 100) : 0}% collected`}
+          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Paid" || r.invoiceStatus === "Downpayment").reduce((sum, r) => sum + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0), true)}
+          helper={`${store.rows.reduce((sum, r) => sum + r.amount, 0) > 0 ? Math.round((store.rows.filter(r => r.invoiceStatus === "Paid" || r.invoiceStatus === "Downpayment").reduce((sum, r) => sum + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0) / store.rows.reduce((sum, r) => sum + r.amount, 0)) * 100) : 0}% collected`}
           accent="teal"
         />
         <StatCard
