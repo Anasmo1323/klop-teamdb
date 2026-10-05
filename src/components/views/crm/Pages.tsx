@@ -109,12 +109,12 @@ function PageFrame({ children }: { children: ReactNode }) {
 
 // Stage pill with dot — replaces plain StatusBadge for pipeline stages
 const stagePillMap: Record<string, string> = {
-  "Cold":          "badge badge-cold",
-  "Prospecting":   "badge badge-prospecting",
+  "Cold": "badge badge-cold",
+  "Prospecting": "badge badge-prospecting",
   "Qualification": "badge badge-qualification",
-  "Proposal":      "badge badge-proposal",
-  "Closed Won":    "badge badge-closed-won",
-  "Closed Lost":   "badge badge-closed-lost",
+  "Proposal": "badge badge-proposal",
+  "Closed Won": "badge badge-closed-won",
+  "Closed Lost": "badge badge-closed-lost",
 };
 function StagePill({ stage }: { stage: string }) {
   const cls = stagePillMap[stage] ?? "badge badge-neutral";
@@ -180,7 +180,7 @@ export function useTableSort<T>(data: T[]) {
       sortableItems.sort((a, b) => {
         let aVal = (a as any)[sortConfig.key];
         let bVal = (b as any)[sortConfig.key];
-        
+
         if (aVal == null) aVal = "";
         if (bVal == null) bVal = "";
 
@@ -209,11 +209,11 @@ export function useTableSort<T>(data: T[]) {
 
 export function SortableHeader({ label, sortKey, sortConfig, requestSort, className }: { label: string, sortKey?: string, sortConfig: any, requestSort: any, className?: string }) {
   if (!sortKey) return <th className={className}>{label}</th>;
-  
+
   const isActive = sortConfig?.key === sortKey;
   return (
-    <th 
-      onClick={() => requestSort(sortKey)} 
+    <th
+      onClick={() => requestSort(sortKey)}
       className={`cursor-pointer select-none hover:bg-slate-50 transition-colors ${className || ''}`}
       style={{ whiteSpace: 'nowrap' }}
     >
@@ -235,13 +235,13 @@ export function DashboardPage() {
     "albear@technowave-eg.com": "Albear",
     "asalah@technowave-eg.com": "Abdelrahman",
   };
-  const userName = adminEmail && emailMap[adminEmail.toLowerCase()] 
-    ? emailMap[adminEmail.toLowerCase()] 
-    : adminEmail 
-      ? adminEmail.split('@')[0].charAt(0).toUpperCase() + adminEmail.split('@')[0].slice(1) 
+  const userName = adminEmail && emailMap[adminEmail.toLowerCase()]
+    ? emailMap[adminEmail.toLowerCase()]
+    : adminEmail
+      ? adminEmail.split('@')[0].charAt(0).toUpperCase() + adminEmail.split('@')[0].slice(1)
       : "Team";
   const [dateRange, setDateRange] = useState({ from: "2026-01-01", to: "2026-12-31" });
-    const targetStore = useEditableRows("medsales-targets", targets);
+  const targetStore = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
 
   const filteredDeals = useMemo(() => {
@@ -284,7 +284,7 @@ export function DashboardPage() {
       dashboardOpenPipeline,
       `${dashboardActiveDeals} active deals`,
     ],
-    
+
     ["Invoices at risk", dashboardOverdueExposure, "Sent + overdue exposure"],
   ];
 
@@ -361,7 +361,7 @@ export function DashboardPage() {
   };
   const liveMomentum = useMemo(() => {
     const now = new Date();
-    
+
     // Map for Deal margins
     const dealCodeToMargin: Record<string, number> = {};
     pipelineStore.rows.forEach(d => {
@@ -373,7 +373,7 @@ export function DashboardPage() {
       const yr = d.getFullYear();
       const mo = d.getMonth();
       const label = d.toLocaleString("en-US", { month: "short" });
-      
+
       const paidInvoices = invoiceStore.rows.filter((row) => {
         if ((row.invoiceStatus !== "Paid" && row.invoiceStatus !== "Downpayment") || !row.issueDate) return false;
         const cd = new Date(row.issueDate);
@@ -438,8 +438,20 @@ export function DashboardPage() {
         }
       />
 
-      <div className="crm-stat-grid">
-        
+      <div className="crm-stat-grid crm-stat-grid-3">
+
+        <StatCard
+          label="Revenue achieved"
+          value={formatCurrency(dashboardAchieved, true)}
+          helper={`${Math.round(dashboardAttainment * 100)}% attainment`}
+          accent="teal"
+        />
+        <StatCard
+          label="Open pipeline"
+          value={formatCurrency(dashboardOpenPipeline, true)}
+          helper={`${dashboardActiveDeals} active deals`}
+          accent="amber"
+        />
         <StatCard
           label="Invoices at risk"
           value={formatCurrency(dashboardOverdueExposure, true)}
@@ -711,7 +723,7 @@ function DataTable({
     <div className={`ct-table-wrap relative ${editing ? " ct-editing" : ""}`} onDoubleClick={onDoubleClick}>
       {editing && (
         <div className="ct-edit-banner">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
           Edit mode — double-click any cell to edit. Hit Save changes when done.
         </div>
       )}
@@ -877,7 +889,7 @@ function EditableInput({
   if (type === "date") {
     const dateObj = typeof value === "string" && value ? new Date(`${value}T00:00:00`) : null;
     const isValid = dateObj && !isNaN(dateObj.getTime());
-    
+
     return (
       <DatePicker
         selected={isValid ? dateObj : null}
@@ -1085,11 +1097,11 @@ export function TargetsPage() {
         .includes(search.toLowerCase()) &&
       (filter === "All statuses" || row.status === filter),
   );
-  
+
   const targetTotal = store.rows.reduce((sum, row) => sum + row.target, 0);
   const achievedTotal = store.rows.reduce((sum, row) => sum + getComputedAchieved(row.productLine ?? row.focus ?? "To be assigned"), 0);
   const targetAttainment = targetTotal ? achievedTotal / targetTotal : 0;
-  
+
   const exportRows = store.rows.map((row) => {
     const productLine = row.productLine ?? row.focus ?? "To be assigned";
     const computedAchieved = getComputedAchieved(productLine);
@@ -1125,7 +1137,7 @@ export function TargetsPage() {
     setAdding(false);
     toast.success("Target record added. Save changes to keep it.");
   };
-    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -1216,7 +1228,7 @@ export function TargetsPage() {
       </div>
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
-<DataTable editing={store.editing} loading={store.loading}>
+        <DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
@@ -1351,7 +1363,7 @@ export function ForecastPage() {
     closeDate: "",
     nextAction: "",
   });
-  
+
   const handleConvertToPO = async (deal: DealRow) => {
     try {
       if (deal.code) {
@@ -1365,7 +1377,7 @@ export function ForecastPage() {
           return;
         }
       }
-      
+
       const newId = `PO-${Date.now().toString().slice(-4)}`;
       const newPO: PurchaseOrderRow = {
         code: deal.code,
@@ -1382,11 +1394,11 @@ export function ForecastPage() {
         stage: "Closed Won"
       });
       toast.success("Converted to Purchase Order successfully.");
-    } catch(e: any) {
+    } catch (e: any) {
       toast.error("Error converting to PO: " + e.message);
     }
   };
-  
+
   const store = useEditableRows("medsales-forecast", deals);
   const targetStore = useEditableRows("medsales-targets", []);
   useHighlightRow(store.rows);
@@ -1425,22 +1437,21 @@ export function ForecastPage() {
   const addRecord = () => {
     if (
       !draft.productLine.trim() ||
-      !draft.deal.trim() ||
       !draft.client.trim() ||
-      !draft.product.trim() ||
       !draft.nextAction.trim()
     ) {
       toast.error(
-        "Enter the product line, client, product, and next action before adding the forecast.",
+        "Enter the product line, client, and next action before adding the forecast.",
       );
       return;
     }
     store.addRow({
       id: createRecordId("DEAL", store.rows),
-      deal: draft.deal.trim() || "",
+      code: draft.code?.trim() || undefined,
+      deal: "",
       client: draft.client.trim(),
       productLine: draft.productLine.trim(),
-      product: draft.product.trim(),
+      product: "",
       stage: draft.stage as DealRow["stage"],
       amount: Number(draft.amount) || 0,
       margin: Math.min(1, Math.max(0, Number(draft.margin) || 0)),
@@ -1461,7 +1472,7 @@ export function ForecastPage() {
     setAdding(false);
     toast.success("Pipeline record added. Save changes to keep it.");
   };
-    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -1507,16 +1518,15 @@ export function ForecastPage() {
         }
       />
 
-      
+
 
       {adding && (
         <AddRecordPanel
           title="Add pipeline record"
           fields={[
-            { name: "code", label: "Hospital Code", required: false },
+            { name: "code", label: "Pipeline Code", required: false },
             { name: "productLine", label: "Product line", options: productLineOptions, required: true },
             { name: "client", label: "Client", required: true },
-            { name: "product", label: "Product", required: true },
             { name: "stage", label: "Stage", options: stageOrder.filter(s => s !== "Closed Won") },
             {
               name: "amount",
@@ -1534,7 +1544,7 @@ export function ForecastPage() {
               step: 0.01,
               required: true,
             },
-            { name: "closeDate", label: "Quotation date", type: "date" },
+            { name: "closeDate", label: "Quotation date", type: "date", required: true },
             { name: "nextAction", label: "Next action", required: true },
           ]}
           values={draft}
@@ -1787,7 +1797,7 @@ export function PurchaseOrdersPage() {
     deliveryDate: "",
     followUp: "",
   });
-  
+
   const handleConvertToInvoice = async (po: PurchaseOrderRow) => {
     try {
       if (po.code) {
@@ -1820,7 +1830,7 @@ export function PurchaseOrdersPage() {
         status: "Invoiced"
       });
       toast.success("Converted to Invoice successfully.");
-    } catch(e: any) {
+    } catch (e: any) {
       toast.error("Error converting to Invoice: " + e.message);
     }
   };
@@ -1873,7 +1883,7 @@ export function PurchaseOrdersPage() {
     setAdding(false);
     toast.success("Purchase order added. Save changes to keep it.");
   };
-    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -2152,23 +2162,23 @@ export function InvoicesPage() {
 
     let changed = false;
     const now = new Date();
-    now.setHours(0,0,0,0);
-    
+    now.setHours(0, 0, 0, 0);
+
     Promise.all(store.rows.map(async (row) => {
       let newStatus = row.invoiceStatus;
       let newDays = row.daysOverdue;
       const down = row.downPayment ?? 0;
-      
+
       if (down > 0 && down >= row.amount && row.amount > 0) {
         newStatus = "Paid";
         newDays = 0;
       } else {
         if (row.dueDate && newStatus !== "Paid") {
           const due = new Date(row.dueDate);
-          due.setHours(0,0,0,0);
+          due.setHours(0, 0, 0, 0);
           const diffTime = now.getTime() - due.getTime();
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-          
+
           if (diffDays > 0) {
             newStatus = "Overdue";
             newDays = diffDays;
@@ -2243,7 +2253,7 @@ export function InvoicesPage() {
     setAdding(false);
     toast.success("Invoice added. Save changes to keep it.");
   };
-    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
@@ -2286,7 +2296,7 @@ export function InvoicesPage() {
         }
       />
 
-      
+
 
       {adding && (
         <AddRecordPanel
@@ -2382,9 +2392,9 @@ export function InvoicesPage() {
               let computedDaysOverdue = row.daysOverdue;
               if (store.editing && row.dueDate) {
                 const now = new Date();
-                now.setHours(0,0,0,0);
+                now.setHours(0, 0, 0, 0);
                 const due = new Date(row.dueDate);
-                due.setHours(0,0,0,0);
+                due.setHours(0, 0, 0, 0);
                 const diffTime = now.getTime() - due.getTime();
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 computedDaysOverdue = diffDays > 0 ? diffDays : 0;
@@ -2576,7 +2586,7 @@ export function PipelinesPage() {
   const liveWinRate = totalDealAmount ? liveWonDeals / totalDealAmount : 0;
   const addRecord = () => {
     if (
-      
+
       !draft.client.trim() ||
       !draft.product.trim() ||
       !draft.nextAction.trim()
@@ -2988,7 +2998,7 @@ export function SalesTeamPage() {
     setAdding(false);
     toast.success("Sales-team member added. Save changes to keep it.");
   };
-    const { sortedData, sortConfig, requestSort } = useTableSort(rows);
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <SectionHeader
@@ -3052,7 +3062,7 @@ export function SalesTeamPage() {
       )}
       <section style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-card)", overflow: "hidden" }}>
         <div style={{ padding: "10px 16px 8px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid var(--border)" }}><AdminBadge /></div>
-<DataTable editing={store.editing} loading={store.loading}>
+        <DataTable editing={store.editing} loading={store.loading}>
           <thead>
             <tr>
               <SortableHeader label="Rep" sortKey="rep" sortConfig={sortConfig} requestSort={requestSort} />
