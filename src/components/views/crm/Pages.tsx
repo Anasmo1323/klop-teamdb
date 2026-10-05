@@ -1392,7 +1392,7 @@ export function ForecastPage() {
   const productLineOptions = Array.from(new Set(targetStore.rows.map((r: any) => r.productLine).filter(Boolean))) as string[];
   const rows = store.rows.filter(
     (row) =>
-      row.client.toLowerCase().includes(search.toLowerCase()) &&
+      (row.client || "").toLowerCase().includes((search || "").toLowerCase()) &&
       (filter === "All stages" || row.stage === filter),
   );
   const liveOpenPipeline = store.rows
@@ -1828,7 +1828,7 @@ export function PurchaseOrdersPage() {
 
   const rows = store.rows.filter(
     (row) =>
-      (row.client + row.id).toLowerCase().includes(search.toLowerCase()) &&
+      ((row.client || "") + (row.id || "")).toLowerCase().includes(search.toLowerCase()) &&
       (filter === "All statuses" || row.status === filter),
   );
   const exportRows = store.rows.map((row) => [
@@ -2970,7 +2970,7 @@ export function SalesTeamPage() {
   });
   const store = useEditableRows("medsales-team", team);
   const rows = store.rows.filter((row) =>
-    (row.rep + row.focus).toLowerCase().includes(search.toLowerCase()),
+    ((row.rep || "") + (row.focus || "")).toLowerCase().includes(search.toLowerCase()),
   );
   const exportRows = store.rows.map((row) => [
     row.id,
@@ -3421,7 +3421,7 @@ export function UpaContractsPage() {
 
   const rows = store.rows.filter(
     (r) =>
-      (r.customerName + r.supplier + r.id).toLowerCase().includes(search.toLowerCase()) &&
+      ((r.customerName || "") + (r.supplier || "") + (r.id || "")).toLowerCase().includes(search.toLowerCase()) &&
       (filter === "All statuses" || r.status === filter),
   );
 

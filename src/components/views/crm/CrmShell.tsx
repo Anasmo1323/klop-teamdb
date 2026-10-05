@@ -175,8 +175,9 @@ export function StatCard({
 
 // ─── Status Badge ─────────────────────────────────────────────
 export function StatusBadge({ status }: { status: string }) {
-  const key = status.toLowerCase().replace(/\s/g, "-");
-  return <span className={`crm-status-badge status-${key}`}>{status}</span>;
+  const safeStatus = status || "Unknown";
+  const key = safeStatus.toLowerCase().replace(/\s/g, "-");
+  return <span className={`crm-status-badge status-${key}`}>{safeStatus}</span>;
 }
 
 // ─── Empty State ──────────────────────────────────────────────
