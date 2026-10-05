@@ -1852,6 +1852,7 @@ export function PurchaseOrdersPage() {
     row.followUp,
   ]);
   const addRecord = () => {
+    const finalStatus = draft.status.trim() || "Pending";
     if (
       !draft.client.trim() ||
       !draft.orderDate ||
@@ -1867,7 +1868,7 @@ export function PurchaseOrdersPage() {
       id: createRecordId("PO", store.rows),
       client: draft.client.trim(),
       amount: Number(draft.amount) || 0,
-      status: draft.status as PurchaseOrderRow["status"],
+      status: finalStatus as PurchaseOrderRow["status"],
       orderDate: draft.orderDate,
       deliveryDate: draft.deliveryDate,
       followUp: draft.followUp.trim(),
