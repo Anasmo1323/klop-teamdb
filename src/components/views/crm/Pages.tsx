@@ -1435,24 +1435,16 @@ export function ForecastPage() {
     row.nextAction,
   ]);
   const addRecord = () => {
-    if (
-      !draft.productLine.trim() ||
-      !draft.client.trim() ||
-      !draft.nextAction.trim()
-    ) {
-      toast.error(
-        "Enter the product line, client, and next action before adding the forecast.",
-      );
-      return;
-    }
+    const finalProductLine = draft.productLine.trim() || (productLineOptions.length > 0 ? productLineOptions[0] : "KLS Martin");
+    const finalStage = draft.stage.trim() || "Cold";
     store.addRow({
       id: createRecordId("DEAL", store.rows),
       code: draft.code?.trim() || undefined,
       deal: "",
       client: draft.client.trim(),
-      productLine: draft.productLine.trim(),
+      productLine: finalProductLine,
       product: "",
-      stage: draft.stage as DealRow["stage"],
+      stage: finalStage as DealRow["stage"],
       amount: Number(draft.amount) || 0,
       margin: Math.min(1, Math.max(0, Number(draft.margin) || 0)),
       closeDate: draft.closeDate || undefined,
@@ -1528,22 +1520,8 @@ export function ForecastPage() {
             { name: "productLine", label: "Product line", options: productLineOptions, required: true },
             { name: "client", label: "Client", required: true },
             { name: "stage", label: "Stage", options: stageOrder.filter(s => s !== "Closed Won") },
-            {
-              name: "amount",
-              label: "Amount",
-              type: "number",
-              min: 0,
-              step: 1,
-            },
-            {
-              name: "margin",
-              label: "Margin (decimal)",
-              type: "number",
-              min: 0,
-              max: 1,
-              step: 0.01,
-              required: true,
-            },
+            { name: "amount", label: "Amount", type: "number", min: 0, step: 1, required: true },
+            { name: "margin", label: "Margin (decimal)", type: "number", min: 0, max: 1, step: 0.01, required: true },
             { name: "closeDate", label: "Quotation date", type: "date", required: true },
             { name: "nextAction", label: "Next action", required: true },
           ]}
@@ -1853,17 +1831,6 @@ export function PurchaseOrdersPage() {
   ]);
   const addRecord = () => {
     const finalStatus = draft.status.trim() || "Pending";
-    if (
-      !draft.client.trim() ||
-      !draft.orderDate ||
-      !draft.deliveryDate ||
-      !draft.followUp.trim()
-    ) {
-      toast.error(
-        "Enter the client, dates, and follow-up before adding the purchase order.",
-      );
-      return;
-    }
     store.addRow({
       id: createRecordId("PO", store.rows),
       client: draft.client.trim(),
@@ -1949,31 +1916,11 @@ export function PurchaseOrdersPage() {
           title="Add purchase order"
           fields={[
             { name: "client", label: "Client", required: true },
-            {
-              name: "amount",
-              label: "Amount",
-              type: "number",
-              min: 0,
-              step: 1,
-            },
-            {
-              name: "status",
-              label: "Status",
-              options: ["Pending", "Approved", "Shipped"],
-            },
-            {
-              name: "orderDate",
-              label: "Order date",
-              type: "date",
-              required: true,
-            },
-            {
-              name: "deliveryDate",
-              label: "Delivery date",
-              type: "date",
-              required: true,
-            },
-            { name: "followUp", label: "Follow-up", required: true },
+            { name: "amount", label: "Amount", type: "number", min: 0, step: 1, required: true },
+            { name: "status", label: "Status", options: ["Pending", "Approved", "Shipped"] },
+            { name: "orderDate", label: "Order date", type: "date", required: true },
+            { name: "deliveryDate", label: "Delivery date", type: "date", required: false },
+            { name: "followUp", label: "Follow-up", required: false },
           ]}
           values={draft}
           onChange={(name, value) =>
@@ -2219,23 +2166,15 @@ export function InvoicesPage() {
     row.followUp,
   ]);
   const addRecord = () => {
-    if (
-      !draft.client.trim() ||
-      !draft.issueDate ||
-      !draft.dueDate ||
-      !draft.followUp.trim()
-    ) {
-      toast.error(
-        "Enter the client, issue date, due date, and follow-up before adding the invoice.",
-      );
-      return;
-    }
+    const finalInvoiceStatus = draft.invoiceStatus.trim() || "Issued";
+    const finalShippingStatus = draft.shippingStatus.trim() || "In stock";
     store.addRow({
       id: createRecordId("INV", store.rows),
       client: draft.client.trim(),
       amount: Number(draft.amount) || 0,
       downPayment: Number(draft.downPayment) || 0,
-      invoiceStatus: draft.invoiceStatus as InvoiceRow["invoiceStatus"],
+      invoiceStatus: finalInvoiceStatus as InvoiceRow["invoiceStatus"],
+      shippingStatus: finalShippingStatus as InvoiceRow["shippingStatus"],
       issueDate: draft.issueDate,
       dueDate: draft.dueDate,
       daysOverdue: Number(draft.daysOverdue) || 0,
@@ -2304,42 +2243,14 @@ export function InvoicesPage() {
           title="Add invoice"
           fields={[
             { name: "client", label: "Client", required: true },
-            {
-              name: "amount",
-              label: "Amount",
-              type: "number",
-              min: 0,
-              step: 1,
-            },
-            {
-              name: "downPayment",
-              label: "Down payment",
-              type: "number",
-              min: 0,
-              step: 1,
-            },
+            { name: "amount", label: "Amount", type: "number", min: 0, step: 1, required: true },
+            { name: "downPayment", label: "Down payment", type: "number", min: 0, step: 1, required: false },
             { name: "invoiceStatus", label: "Invoice Status", options: ["Issued", "Downpayment", "Paid"] },
             { name: "shippingStatus", label: "Shipping Status", options: ["In stock", "Contacted supplier", "Shipped", "Delivered to client"] },
-            {
-              name: "issueDate",
-              label: "Issue date",
-              type: "date",
-              required: true,
-            },
-            {
-              name: "dueDate",
-              label: "Due date",
-              type: "date",
-              required: true,
-            },
-            {
-              name: "daysOverdue",
-              label: "Days overdue",
-              type: "number",
-              min: 0,
-              step: 1,
-            },
-            { name: "followUp", label: "Follow-up", required: true },
+            { name: "issueDate", label: "Issue date", type: "date", required: true },
+            { name: "dueDate", label: "Due date", type: "date", required: false },
+            { name: "daysOverdue", label: "Days overdue", type: "number", min: 0, step: 1, required: false },
+            { name: "followUp", label: "Follow-up", required: false },
           ]}
           values={draft}
           onChange={(name, value) =>
