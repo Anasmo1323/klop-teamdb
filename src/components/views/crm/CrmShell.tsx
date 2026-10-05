@@ -81,8 +81,14 @@ export function ReportActions({
   saved?: boolean;
 }) {
   return (
-    <div className="crm-report-actions no-print">
-      {editing && onSave && (
+        <div className="crm-report-actions no-print">
+      {editing && onSave && document.getElementById('global-save-portal') ? createPortal(
+        <button className="flex items-center gap-1.5 px-3 h-8 text-xs font-semibold rounded-md mr-2" style={{ background: "var(--primary)", color: "white", border: "none" }} onClick={onSave}>
+          <Save size={14} />
+          Save changes
+        </button>,
+        document.getElementById('global-save-portal')!
+      ) : editing && onSave && (
         <button className="btn-blue" onClick={onSave}>
           <Save size={15} />
           Save changes

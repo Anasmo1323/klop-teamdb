@@ -1425,6 +1425,7 @@ export function ForecastPage() {
   const addRecord = () => {
     if (
       !draft.productLine.trim() ||
+      !draft.deal.trim() ||
       !draft.client.trim() ||
       !draft.product.trim() ||
       !draft.nextAction.trim()
@@ -1436,10 +1437,9 @@ export function ForecastPage() {
     }
     store.addRow({
       id: createRecordId("DEAL", store.rows),
-      code: draft.code.trim() || undefined,
-      deal: draft.client.trim(),
-      productLine: draft.productLine.trim(),
+      deal: draft.deal.trim() || "",
       client: draft.client.trim(),
+      productLine: draft.productLine.trim(),
       product: draft.product.trim(),
       stage: draft.stage as DealRow["stage"],
       amount: Number(draft.amount) || 0,
@@ -1517,7 +1517,7 @@ export function ForecastPage() {
             { name: "productLine", label: "Product line", options: productLineOptions, required: true },
             { name: "client", label: "Client", required: true },
             { name: "product", label: "Product", required: true },
-            { name: "stage", label: "Stage", options: stageOrder },
+            { name: "stage", label: "Stage", options: stageOrder.filter(s => s !== "Closed Won") },
             {
               name: "amount",
               label: "Amount",
@@ -1659,7 +1659,7 @@ export function ForecastPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {stageOrder.map((value) => (
+                          {stageOrder.filter(s => s !== "Closed Won").map((value) => (
                             <SelectItem key={value} value={value}>
                               {value}
                             </SelectItem>
@@ -1882,13 +1882,7 @@ export function PurchaseOrdersPage() {
         setSearch={setSearch}
         filter={filter}
         setFilter={setFilter}
-        filterOptions={[
-          "All statuses",
-          "Pending",
-          "Approved",
-          "Shipped",
-          "Delivered",
-        ]}
+        filterOptions={["All statuses", "Pending", "Approved", "Shipped", "Invoiced"]}
         action={
           <div className="crm-report-actions">
             <Button
@@ -1954,13 +1948,7 @@ export function PurchaseOrdersPage() {
             {
               name: "status",
               label: "Status",
-              options: [
-                "Pending",
-                "Approved",
-                "Shipped",
-                "Delivered",
-                "Cancelled",
-              ],
+              options: ["Pending", "Approved", "Shipped"],
             },
             {
               name: "orderDate",
@@ -2059,13 +2047,7 @@ export function PurchaseOrdersPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {[
-                            "Pending",
-                            "Approved",
-                            "Shipped",
-                            "Delivered",
-                            "Cancelled",
-                          ].map((value) => (
+                          {["Pending", "Approved", "Shipped"].map((value) => (
                             <SelectItem key={value} value={value}>
                               {value}
                             </SelectItem>
@@ -2325,11 +2307,8 @@ export function InvoicesPage() {
               min: 0,
               step: 1,
             },
-            {
-              name: "status",
-              label: "Status",
-              options: ["Draft", "Sent", "Paid"],
-            },
+            { name: "invoiceStatus", label: "Invoice Status", options: ["Issued", "Downpayment", "Paid", "Overdue"] },
+            { name: "shippingStatus", label: "Shipping Status", options: ["In stock", "Contacted supplier", "Shipped", "Delivered to client"] },
             {
               name: "issueDate",
               label: "Issue date",
@@ -2493,7 +2472,7 @@ export function InvoicesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {["Draft", "Sent", "Paid"].map((value) => (
+                          {["Issued", "Downpayment", "Paid", "Overdue"].map((value) => (
                             <SelectItem key={value} value={value}>
                               {value}
                             </SelectItem>
@@ -2597,7 +2576,7 @@ export function PipelinesPage() {
   const liveWinRate = totalDealAmount ? liveWonDeals / totalDealAmount : 0;
   const addRecord = () => {
     if (
-      !draft.deal.trim() ||
+      
       !draft.client.trim() ||
       !draft.product.trim() ||
       !draft.nextAction.trim()
@@ -2609,7 +2588,7 @@ export function PipelinesPage() {
     }
     store.addRow({
       id: createRecordId("DEAL", store.rows),
-      deal: draft.deal.trim(),
+      deal: draft.deal.trim() || "",
       client: draft.client.trim(),
       product: draft.product.trim(),
       stage: draft.stage as DealRow["stage"],
@@ -2669,10 +2648,10 @@ export function PipelinesPage() {
         <AddRecordPanel
           title="Add pipeline record"
           fields={[
-            { name: "deal", label: "Deal name", required: true },
+            { name: "deal", label: "Deal", required: true },
             { name: "client", label: "Client", required: true },
             { name: "product", label: "Product", required: true },
-            { name: "stage", label: "Stage", options: stageOrder },
+            { name: "stage", label: "Stage", options: stageOrder.filter(s => s !== "Closed Won") },
             {
               name: "amount",
               label: "Amount",
@@ -2903,7 +2882,7 @@ export function PipelinesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {stageOrder.map((value) => (
+                          {stageOrder.filter(s => s !== "Closed Won").map((value) => (
                             <SelectItem key={value} value={value}>
                               {value}
                             </SelectItem>
