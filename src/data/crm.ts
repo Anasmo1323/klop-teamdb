@@ -659,8 +659,8 @@ export const weightedPipeline = deals.filter((deal) => !["Closed Won", "Closed L
 export const activeDeals = deals.filter((deal) => !["Closed Won", "Closed Lost"].includes(deal.stage) && deal.amount > 0).length;
 export const winRate = deals.length ? deals.filter((deal) => deal.stage === "Closed Won").length / deals.filter((deal) => deal.stage !== "Prospecting").length : 0;
 export const totalInvoiced = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-export const collected = invoices.filter((invoice) => invoice.status === "Paid").reduce((sum, invoice) => sum + invoice.amount, 0);
-export const overdueExposure = invoices.filter((invoice) => invoice.status === "Overdue" || invoice.status === "Sent").reduce((sum, invoice) => sum + invoice.amount, 0);
+export const collected = invoices.filter((invoice) => invoice.invoiceStatus === "Paid" || invoice.invoiceStatus === "Downpayment").reduce((sum, invoice) => sum + (invoice.invoiceStatus === "Downpayment" ? (invoice.downPayment || 0) : invoice.amount), 0);
+export const overdueExposure = invoices.filter((invoice) => invoice.invoiceStatus === "Overdue").reduce((sum, invoice) => sum + invoice.amount, 0);
 
 export const achievementByRep = targets
   .filter((row) => row.target > 0)
@@ -674,10 +674,10 @@ export const pipelineByStage = stageOrder.map((stage) => ({
   weighted: deals.filter((deal) => deal.stage === stage).reduce((sum, deal) => sum + deal.amount * deal.margin, 0),
 }));
 
-export const collectionsByStatus = (["Paid", "Sent", "Overdue", "Draft"] as const).map((status) => ({
+export const collectionsByStatus = (["Paid", "Issued", "Downpayment", "Overdue"] as const).map((status) => ({
   status,
-  amount: invoices.filter((invoice) => invoice.status === status).reduce((sum, invoice) => sum + invoice.amount, 0),
-  count: invoices.filter((invoice) => invoice.status === status).length,
+  amount: invoices.filter((invoice) => invoice.invoiceStatus === status).reduce((sum, invoice) => sum + invoice.amount, 0),
+  count: invoices.filter((invoice) => invoice.invoiceStatus === status).length,
 }));
 
 export const monthlyTrend = [

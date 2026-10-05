@@ -325,12 +325,12 @@ export function DashboardPage() {
     });
 
     invoiceStore.rows
-      .filter((inv) => inv.status === "Paid" && (!inv.issueDate || (inv.issueDate >= dateRange.from && inv.issueDate <= dateRange.to)))
+      .filter((inv) => (inv.invoiceStatus === "Paid" || inv.invoiceStatus === "Downpayment") && (!inv.issueDate || (inv.issueDate >= dateRange.from && inv.issueDate <= dateRange.to)))
       .forEach((inv) => {
         if (inv.code && dealCodeToLine[inv.code]) {
           const line = dealCodeToLine[inv.code];
           if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
-          lines[line].achieved += inv.amount;
+          lines[line].achieved += (inv.invoiceStatus === "Downpayment" ? (inv.downPayment || 0) : inv.amount);
         }
       });
 
@@ -562,16 +562,16 @@ export function DashboardPage() {
                   outerRadius={82}
                   paddingAngle={4}
                 >
-                  {collectionsByStatus.map((entry: { status: "Paid" | "Sent" | "Overdue" | "Draft"; amount: number; count: number }) => (
+                  {collectionsByStatus.map((entry: { status: "Paid" | "Issued" | "Downpayment" | "Overdue"; amount: number; count: number }) => (
                     <Cell
                       key={entry.status}
                       fill={
                         (
                           {
                             Paid: "#2a9d8f",
-                            Sent: "#5b6b8c",
+                            Issued: "#5b6b8c",
+                            Downpayment: "#f59e0b",
                             Overdue: "#d86c75",
-                            Draft: "#dfe5ee",
                           } as Record<string, string>
                         )[entry.status]
                       }
@@ -596,9 +596,9 @@ export function DashboardPage() {
                       style={{
                         backgroundColor: {
                           Paid: "#2a9d8f",
-                          Sent: "#5b6b8c",
+                          Issued: "#5b6b8c",
+                          Downpayment: "#f59e0b",
                           Overdue: "#d86c75",
-                          Draft: "#dfe5ee",
                         }[entry.status],
                       }}
                     />
@@ -1074,8 +1074,8 @@ export function TargetsPage() {
         .filter(Boolean)
     );
     return invoiceStore.rows
-      .filter(inv => inv.status === "Paid" && inv.code && dealCodes.has(inv.code))
-      .reduce((sum, inv) => sum + inv.amount, 0);
+      .filter(inv => (inv.invoiceStatus === "Paid" || inv.invoiceStatus === "Downpayment") && inv.code && dealCodes.has(inv.code))
+      .reduce((sum, inv) => sum + (inv.invoiceStatus === "Downpayment" ? (inv.downPayment || 0) : inv.amount), 0);
   };
 
   const rows = store.rows.filter(
@@ -1807,7 +1807,8 @@ export function PurchaseOrdersPage() {
         id: newId,
         client: po.client,
         amount: po.amount,
-        status: "Draft",
+        invoiceStatus: "Issued",
+        shippingStatus: "In stock",
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: "",
         daysOverdue: 0,
@@ -1920,7 +1921,7 @@ export function PurchaseOrdersPage() {
       <div className="crm-stat-grid crm-stat-grid-3">
         <StatCard
           label="Total active POs"
-          value={formatCurrency(store.rows.filter(r => r.status !== "Cancelled").reduce((sum, r) => sum + r.amount, 0), true)}
+          value={formatCurrency(store.rows.filter(r => r.status !== "Invoiced").reduce((sum, r) => sum + r.amount, 0), true)}
           helper="Excluding cancelled"
           accent="navy"
         />
@@ -1932,7 +1933,7 @@ export function PurchaseOrdersPage() {
         />
         <StatCard
           label="Delivered POs"
-          value={formatCurrency(store.rows.filter(r => r.status === "Delivered").reduce((sum, r) => sum + r.amount, 0), true)}
+          value={formatCurrency(store.rows.filter(r => r.status === "Shipped").reduce((sum, r) => sum + r.amount, 0), true)}
           helper="Ready for invoicing"
           accent="teal"
         />
@@ -2116,7 +2117,7 @@ export function PurchaseOrdersPage() {
                   </td>
                   <td>
                     <div className="flex items-center justify-end gap-1">
-                      {row.status === "Delivered" ? (
+                      {row.status === "Shipped" ? (
                         <span className="win-check-icon" title="Already invoiced">
                           <Check size={16} strokeWidth={2.5} />
                         </span>
@@ -2240,7 +2241,7 @@ export function InvoicesPage() {
       client: draft.client.trim(),
       amount: Number(draft.amount) || 0,
       downPayment: Number(draft.downPayment) || 0,
-      status: draft.invoiceStatus as InvoiceRow["status"],
+      invoiceStatus: draft.invoiceStatus as InvoiceRow["invoiceStatus"],
       issueDate: draft.issueDate,
       dueDate: draft.dueDate,
       daysOverdue: Number(draft.daysOverdue) || 0,
@@ -2366,13 +2367,13 @@ export function InvoicesPage() {
         />
         <StatCard
           label="Collected"
-          value={formatCurrency(store.rows.filter(r => r.status === "Paid").reduce((sum, r) => sum + r.amount, 0), true)}
-          helper={`${store.rows.reduce((sum, r) => sum + r.amount, 0) > 0 ? Math.round((store.rows.filter(r => r.status === "Paid").reduce((sum, r) => sum + r.amount, 0) / store.rows.reduce((sum, r) => sum + r.amount, 0)) * 100) : 0}% collected`}
+          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Paid").reduce((sum, r) => sum + r.amount, 0), true)}
+          helper={`${store.rows.reduce((sum, r) => sum + r.amount, 0) > 0 ? Math.round((store.rows.filter(r => r.invoiceStatus === "Paid").reduce((sum, r) => sum + r.amount, 0) / store.rows.reduce((sum, r) => sum + r.amount, 0)) * 100) : 0}% collected`}
           accent="teal"
         />
         <StatCard
           label="At risk"
-          value={formatCurrency(store.rows.filter(r => r.status === "Overdue" || r.status === "Sent").reduce((sum, r) => sum + r.amount, 0), true)}
+          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Overdue").reduce((sum, r) => sum + r.amount, 0), true)}
           helper="Sent + overdue exposure"
           accent="rose"
         />
@@ -2483,7 +2484,7 @@ export function InvoicesPage() {
                         value={row.invoiceStatus}
                         onValueChange={(value) =>
                           store.updateRow(originalIndex, {
-                            status: value as InvoiceRow["status"],
+                            invoiceStatus: value as InvoiceRow["invoiceStatus"],
                           })
                         }
                       >
