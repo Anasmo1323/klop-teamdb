@@ -2307,7 +2307,7 @@ export function InvoicesPage() {
               min: 0,
               step: 1,
             },
-            { name: "invoiceStatus", label: "Invoice Status", options: ["Issued", "Downpayment", "Paid", "Overdue"] },
+            { name: "invoiceStatus", label: "Invoice Status", options: ["Issued", "Downpayment", "Paid"] },
             { name: "shippingStatus", label: "Shipping Status", options: ["In stock", "Contacted supplier", "Shipped", "Delivered to client"] },
             {
               name: "issueDate",
@@ -2472,7 +2472,7 @@ export function InvoicesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {["Issued", "Downpayment", "Paid", "Overdue"].map((value) => (
+                          {["Issued", "Downpayment", "Paid"].map((value) => (
                             <SelectItem key={value} value={value}>
                               {value}
                             </SelectItem>
