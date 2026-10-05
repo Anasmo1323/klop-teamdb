@@ -1817,7 +1817,7 @@ export function PurchaseOrdersPage() {
       };
       await setDoc(doc(db, "medsales-invoices", newId), newInvoice);
       await updateDoc(doc(db, "medsales-purchase-orders", po.id), {
-        status: "Delivered"
+        status: "Invoiced"
       });
       toast.success("Converted to Invoice successfully.");
     } catch(e: any) {
@@ -2100,7 +2100,7 @@ export function PurchaseOrdersPage() {
                   </td>
                   <td>
                     <div className="flex items-center justify-end gap-1">
-                      {row.status === "Shipped" ? (
+                      {row.status === "Invoiced" ? (
                         <span className="win-check-icon" title="Already invoiced">
                           <Check size={16} strokeWidth={2.5} />
                         </span>
