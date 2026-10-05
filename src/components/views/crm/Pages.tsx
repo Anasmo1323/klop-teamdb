@@ -1352,6 +1352,7 @@ export function ForecastPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All stages");
   const [adding, setAdding] = useState(false);
+  const [pipelineMode, setPipelineMode] = useState<"EUR" | "USD">("EUR");
   const [draft, setDraft] = useState<Record<string, string>>({
     code: "",
     productLine: "",
@@ -1399,7 +1400,7 @@ export function ForecastPage() {
     }
   };
 
-  const store = useEditableRows("medsales-forecast", deals);
+  const store = useEditableRows(pipelineMode === "EUR" ? "medsales-forecast" : "medsales-forecast-usd", deals);
   const targetStore = useEditableRows("medsales-targets", []);
   useHighlightRow(store.rows);
   const productLineOptions = Array.from(new Set(targetStore.rows.map((r: any) => r.productLine).filter(Boolean))) as string[];
@@ -1468,7 +1469,7 @@ export function ForecastPage() {
   return (
     <PageFrame>
       <RouteTableHeader
-        title="Sales Pipeline"
+        title={pipelineMode === "EUR" ? "Sales Pipeline" : "Sales Pipeline (USD)"}
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -1476,6 +1477,12 @@ export function ForecastPage() {
         filterOptions={["All stages", ...stageOrder]}
         action={
           <div className="crm-report-actions">
+            <Button
+              className="btn-secondary"
+              onClick={() => setPipelineMode(pipelineMode === "EUR" ? "USD" : "EUR")}
+            >
+              Switch to {pipelineMode === "EUR" ? "USD" : "EUR"}
+            </Button>
             <Button
               className="btn-secondary"
               onClick={() => setAdding(true)}
@@ -1499,7 +1506,7 @@ export function ForecastPage() {
                 "Next action",
               ]}
               rows={exportRows}
-              fileName="medsales-forecast"
+              fileName={pipelineMode === "EUR" ? "medsales-forecast" : "medsales-forecast-usd"}
               editing={store.editing}
               onEdit={() => store.setEditing(true)}
               onSave={store.save}
@@ -1767,6 +1774,7 @@ export function PurchaseOrdersPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All statuses");
   const [adding, setAdding] = useState(false);
+  const [poMode, setPoMode] = useState<"Default" | "Diagon">("Default");
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
     amount: "",
@@ -1812,7 +1820,7 @@ export function PurchaseOrdersPage() {
       toast.error("Error converting to Invoice: " + e.message);
     }
   };
-  const store = useEditableRows<PurchaseOrderRow>("medsales-purchase-orders", []);
+  const store = useEditableRows<PurchaseOrderRow>(poMode === "Default" ? "medsales-purchase-orders" : "medsales-purchase-orders-diagon", []);
   useHighlightRow(store.rows);
 
   const rows = store.rows.filter(
@@ -1855,7 +1863,7 @@ export function PurchaseOrdersPage() {
   return (
     <PageFrame>
       <RouteTableHeader
-        title="Purchase orders"
+        title={poMode === "Default" ? "Purchase orders" : "Purchase orders (Diagon)"}
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -1863,6 +1871,12 @@ export function PurchaseOrdersPage() {
         filterOptions={["All statuses", "Pending", "Approved", "Shipped", "Invoiced"]}
         action={
           <div className="crm-report-actions">
+            <Button
+              className="btn-secondary"
+              onClick={() => setPoMode(poMode === "Default" ? "Diagon" : "Default")}
+            >
+              Switch to {poMode === "Default" ? "Diagon POs" : "Default POs"}
+            </Button>
             <Button
               className="btn-secondary"
               onClick={() => setAdding(true)}
@@ -1881,7 +1895,7 @@ export function PurchaseOrdersPage() {
                 "Follow-up",
               ]}
               rows={exportRows}
-              fileName="medsales-purchase-orders"
+              fileName={poMode === "Default" ? "medsales-purchase-orders" : "medsales-purchase-orders-diagon"}
               editing={store.editing}
               onEdit={() => store.setEditing(true)}
               onSave={store.save}
@@ -2544,6 +2558,7 @@ export function PipelinesPage() {
         title="Pipeline analysis"
         action={
           <div className="crm-report-actions">
+
             <Button
               className="btn-secondary"
               onClick={() => setAdding(true)}
