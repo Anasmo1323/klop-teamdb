@@ -58,6 +58,7 @@ import {
   collectionsByStatus,
   deals,
   formatCurrency,
+  formatCurrencyUSD,
   formatCurrencyEGP,
   formatDate,
   invoices,
@@ -1348,11 +1349,13 @@ export function TargetsPage() {
 }
 
 export function ForecastPage() {
-  const { eurToEgp } = useExchangeRates();
+  const { eurToEgp, usdToEgp } = useExchangeRates();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All stages");
   const [adding, setAdding] = useState(false);
   const [pipelineMode, setPipelineMode] = useState<"EUR" | "USD">("EUR");
+  const currentRate = pipelineMode === "EUR" ? eurToEgp : usdToEgp;
+  const currentFormatter = pipelineMode === "EUR" ? formatCurrency : formatCurrencyUSD;
   const [draft, setDraft] = useState<Record<string, string>>({
     code: "",
     productLine: "",
@@ -1431,7 +1434,7 @@ export function ForecastPage() {
     row.amount,
     row.margin,
     row.amount * row.margin,
-    row.amount * row.margin * eurToEgp,
+    row.amount * row.margin * currentRate,
     formatDate(row.closeDate),
     row.nextAction,
   ]);
@@ -1555,7 +1558,7 @@ export function ForecastPage() {
         />
         <StatCard
           label="Total open pipelines"
-          value={formatCurrency(liveOpenPipeline, true)}
+          value={currentFormatter(liveOpenPipeline, true)}
           helper="Excludes closed won/lost"
           accent="navy"
         />
@@ -1677,7 +1680,7 @@ export function ForecastPage() {
                         }
                       />
                     ) : (
-                      formatCurrency(row.amount, true)
+                      currentFormatter(row.amount, true)
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-6`)}>
@@ -1706,10 +1709,10 @@ export function ForecastPage() {
                     )}
                   </td>
                   <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "var(--text-heading)", fontSize: 13 }}>
-                    {formatCurrency(row.amount * row.margin, false)}
+                    {currentFormatter(row.amount * row.margin, false)}
                   </td>
                   <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 12, color: "var(--text-muted)" }}>
-                    {formatCurrencyEGP(row.amount * row.margin * eurToEgp, false)}
+                    {formatCurrencyEGP(row.amount * row.margin * currentRate, false)}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-9`)}>
                     {store.editingCell === `${row.id}-${9}` ? (
@@ -1775,6 +1778,7 @@ export function PurchaseOrdersPage() {
   const [filter, setFilter] = useState("All statuses");
   const [adding, setAdding] = useState(false);
   const [poMode, setPoMode] = useState<"Default" | "Diagon">("Default");
+  const poFormatter = poMode === "Default" ? formatCurrency : formatCurrencyEGP;
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
     amount: "",
@@ -1908,25 +1912,25 @@ export function PurchaseOrdersPage() {
       <div className="crm-stat-grid crm-stat-grid-4">
         <StatCard
           label="Total Amount of POs"
-          value={formatCurrency(store.rows.reduce((sum, r) => sum + r.amount, 0), true)}
+          value={poFormatter(store.rows.reduce((sum, r) => sum + r.amount, 0), true)}
           helper={`${store.rows.length} total orders`}
           accent="navy"
         />
         <StatCard
           label="Shipped POs"
-          value={formatCurrency(store.rows.filter(r => r.status === "Shipped").reduce((sum, r) => sum + r.amount, 0), true)}
+          value={poFormatter(store.rows.filter(r => r.status === "Shipped").reduce((sum, r) => sum + r.amount, 0), true)}
           helper="In transit"
           accent="teal"
         />
         <StatCard
           label="Approved POs"
-          value={formatCurrency(store.rows.filter(r => r.status === "Approved").reduce((sum, r) => sum + r.amount, 0), true)}
+          value={poFormatter(store.rows.filter(r => r.status === "Approved").reduce((sum, r) => sum + r.amount, 0), true)}
           helper="Processing"
           accent="navy"
         />
         <StatCard
           label="Pending POs"
-          value={formatCurrency(store.rows.filter(r => r.status === "Pending").reduce((sum, r) => sum + r.amount, 0), true)}
+          value={poFormatter(store.rows.filter(r => r.status === "Pending").reduce((sum, r) => sum + r.amount, 0), true)}
           helper="Awaiting approval"
           accent="amber"
         />
@@ -2008,7 +2012,7 @@ export function PurchaseOrdersPage() {
                         }
                       />
                     ) : (
-                      formatCurrency(row.amount, true)
+                      poFormatter(row.amount, true)
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-5`)}>

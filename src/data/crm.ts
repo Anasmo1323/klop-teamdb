@@ -702,6 +702,10 @@ export function formatCurrency(value: number, compact = false) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(value);
 }
 
+export function formatCurrencyUSD(value: number, compact = false) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(value);
+}
+
 export function formatCurrencyEGP(value: number, compact = false) {
   return new Intl.NumberFormat("en-EG", { style: "currency", currency: "EGP", minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(value);
 }
