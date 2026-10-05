@@ -1891,11 +1891,23 @@ export function PurchaseOrdersPage() {
           </div>
         }
       />
-      <div className="crm-stat-grid crm-stat-grid-3">
+      <div className="crm-stat-grid crm-stat-grid-4">
         <StatCard
-          label="Total active POs"
-          value={formatCurrency(store.rows.filter(r => r.status !== "Invoiced").reduce((sum, r) => sum + r.amount, 0), true)}
-          helper="Excluding cancelled"
+          label="Total Amount of POs"
+          value={formatCurrency(store.rows.reduce((sum, r) => sum + r.amount, 0), true)}
+          helper={`${store.rows.length} total orders`}
+          accent="navy"
+        />
+        <StatCard
+          label="Shipped POs"
+          value={formatCurrency(store.rows.filter(r => r.status === "Shipped").reduce((sum, r) => sum + r.amount, 0), true)}
+          helper="In transit"
+          accent="teal"
+        />
+        <StatCard
+          label="Approved POs"
+          value={formatCurrency(store.rows.filter(r => r.status === "Approved").reduce((sum, r) => sum + r.amount, 0), true)}
+          helper="Processing"
           accent="navy"
         />
         <StatCard
@@ -1903,12 +1915,6 @@ export function PurchaseOrdersPage() {
           value={formatCurrency(store.rows.filter(r => r.status === "Pending").reduce((sum, r) => sum + r.amount, 0), true)}
           helper="Awaiting approval"
           accent="amber"
-        />
-        <StatCard
-          label="Delivered POs"
-          value={formatCurrency(store.rows.filter(r => r.status === "Shipped").reduce((sum, r) => sum + r.amount, 0), true)}
-          helper="Ready for invoicing"
-          accent="teal"
         />
       </div>
       {adding && (
@@ -2262,21 +2268,21 @@ export function InvoicesPage() {
       )}
       <div className="crm-stat-grid crm-stat-grid-3">
         <StatCard
-          label="Invoiced"
+          label="Total Issued Invoices"
           value={formatCurrency(store.rows.reduce((sum, r) => sum + r.amount, 0), true)}
           helper={`${store.rows.length} invoices`}
           accent="navy"
         />
         <StatCard
-          label="Collected"
+          label="Total Revenue"
           value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Paid" || r.invoiceStatus === "Downpayment").reduce((sum, r) => sum + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0), true)}
           helper={`${store.rows.reduce((sum, r) => sum + r.amount, 0) > 0 ? Math.round((store.rows.filter(r => r.invoiceStatus === "Paid" || r.invoiceStatus === "Downpayment").reduce((sum, r) => sum + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0) / store.rows.reduce((sum, r) => sum + r.amount, 0)) * 100) : 0}% collected`}
           accent="teal"
         />
         <StatCard
-          label="At risk"
-          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Overdue").reduce((sum, r) => sum + r.amount, 0), true)}
-          helper="Sent + overdue exposure"
+          label="Total Overdue"
+          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Overdue" || (Number(r.daysOverdue) > 0 && r.invoiceStatus !== "Paid")).reduce((sum, r) => sum + r.amount, 0), true)}
+          helper="Past due date"
           accent="rose"
         />
       </div>
