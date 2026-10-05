@@ -230,6 +230,7 @@ export function SortableHeader({ label, sortKey, sortConfig, requestSort, classN
 }
 
 export function DashboardPage() {
+  const { eurToEgp, usdToEgp } = useExchangeRates();
   const { adminEmail } = useCrmAccess();
   const emailMap: Record<string, string> = {
     "amohamed@technowave-eg.com": "Anas",
@@ -242,472 +243,134 @@ export function DashboardPage() {
       ? adminEmail.split('@')[0].charAt(0).toUpperCase() + adminEmail.split('@')[0].slice(1)
       : "Team";
   const [dateRange, setDateRange] = useState({ from: "2026-01-01", to: "2026-12-31" });
+  
   const targetStore = useEditableRows("medsales-targets", targets);
-  const pipelineStore = useEditableRows("medsales-forecast", deals);
+  const dashboardTargetTotal = targetStore.rows.reduce((sum, row) => sum + row.target, 0);
 
-  const filteredDeals = useMemo(() => {
-    return pipelineStore.rows.filter(row => {
+  // EUR stores
+  const pipelineEUR = useEditableRows("medsales-forecast", deals);
+  const invoiceEUR = useEditableRows<InvoiceRow>("medsales-invoices", []);
+  // USD stores
+  const pipelineUSD = useEditableRows("medsales-forecast-usd", []);
+  const invoiceUSD = useEditableRows<InvoiceRow>("medsales-invoices-usd", []);
+  // EGP stores
+  const pipelineEGP = useEditableRows("medsales-forecast-egp", []);
+  const invoiceEGP = useEditableRows<InvoiceRow>("medsales-invoices-egp", []);
+
+  const getMetrics = (pipelineStore: any, invoiceStore: any) => {
+    const filteredDeals = pipelineStore.rows.filter((row: any) => {
       if (!row.closeDate) return true;
       return row.closeDate >= dateRange.from && row.closeDate <= dateRange.to;
     });
-  }, [pipelineStore.rows, dateRange]);
-  const invoiceStore = useEditableRows<InvoiceRow>("medsales-invoices", []);
+    const dashboardAchieved = invoiceStore.rows
+      .filter((row: any) => (row.invoiceStatus === "Paid" || row.invoiceStatus === "Downpayment") && (!row.issueDate || (row.issueDate >= dateRange.from && row.issueDate <= dateRange.to)))
+      .reduce((sum: number, row: any) => sum + (row.invoiceStatus === "Downpayment" ? (row.downPayment || 0) : row.amount), 0);
+    const dashboardOpenPipeline = filteredDeals.filter((row: any) => !["Closed Won", "Closed Lost"].includes(row.stage))
+      .reduce((sum: number, row: any) => sum + row.amount, 0);
+    const dashboardOverdueExposure = invoiceStore.rows
+      .filter((row: any) => row.invoiceStatus === "Overdue")
+      .reduce((sum: number, row: any) => sum + row.amount, 0);
+    const activeDeals = filteredDeals.filter((row: any) => !["Closed Won", "Closed Lost"].includes(row.stage) && row.amount > 0).length;
+    return { dashboardAchieved, dashboardOpenPipeline, dashboardOverdueExposure, activeDeals };
+  };
 
-  const dashboardTargetTotal = targetStore.rows.reduce(
-    (sum, row) => sum + row.target,
-    0,
-  );
-  const dashboardAchieved = invoiceStore.rows
-    .filter((row) => (row.invoiceStatus === "Paid" || row.invoiceStatus === "Downpayment") && (!row.issueDate || (row.issueDate >= dateRange.from && row.issueDate <= dateRange.to)))
-    .reduce((sum, row) => sum + (row.invoiceStatus === "Downpayment" ? (row.downPayment || 0) : row.amount), 0);
-  const dashboardAttainment = dashboardTargetTotal
-    ? dashboardAchieved / dashboardTargetTotal
-    : 0;
-  const dashboardOpenPipeline = filteredDeals.filter((row) => !["Closed Won", "Closed Lost"].includes(row.stage))
-    .reduce((sum, row) => sum + row.amount, 0);
-  const dashboardWeightedPipeline = filteredDeals.filter((row) => !["Closed Won", "Closed Lost"].includes(row.stage))
-    .reduce((sum, row) => sum + row.amount * row.margin, 0);
-  const dashboardActiveDeals = filteredDeals.filter(
-    (row) =>
-      !["Closed Won", "Closed Lost"].includes(row.stage) && row.amount > 0,
-  ).length;
-  const dashboardOverdueExposure = invoiceStore.rows
-    .filter((row) => row.invoiceStatus === "Overdue")
-    .reduce((sum, row) => sum + row.amount, 0);
-  const dashboardExportRows = [
-    [
-      "Revenue achieved",
-      dashboardAchieved,
-      `${Math.round(dashboardAttainment * 100)}% attainment`,
-    ],
-    [
-      "Open pipeline",
-      dashboardOpenPipeline,
-      `${dashboardActiveDeals} active deals`,
-    ],
+  const metricsEUR = getMetrics(pipelineEUR, invoiceEUR);
+  const metricsUSD = getMetrics(pipelineUSD, invoiceUSD);
+  const metricsEGP = getMetrics(pipelineEGP, invoiceEGP);
 
-    ["Invoices at risk", dashboardOverdueExposure, "Sent + overdue exposure"],
-  ];
+  const totalAchievedEGP = metricsEUR.dashboardAchieved * eurToEgp + metricsUSD.dashboardAchieved * usdToEgp + metricsEGP.dashboardAchieved;
+  const totalOpenPipelineEGP = metricsEUR.dashboardOpenPipeline * eurToEgp + metricsUSD.dashboardOpenPipeline * usdToEgp + metricsEGP.dashboardOpenPipeline;
+  const totalOverdueEGP = metricsEUR.dashboardOverdueExposure * eurToEgp + metricsUSD.dashboardOverdueExposure * usdToEgp + metricsEGP.dashboardOverdueExposure;
+  const totalActiveDeals = metricsEUR.activeDeals + metricsUSD.activeDeals + metricsEGP.activeDeals;
+
+  const dashboardAttainment = dashboardTargetTotal ? totalAchievedEGP / dashboardTargetTotal : 0;
 
   const handleSeed = async () => {
     try {
       const batch = writeBatch(db);
       targets.forEach((t) => batch.set(doc(db, "medsales-targets", t.id), t));
       deals.forEach((t) => batch.set(doc(db, "medsales-forecast", t.id), t));
-      purchaseOrders.forEach((t) =>
-        batch.set(doc(db, "medsales-purchase-orders", t.id), t),
-      );
+      purchaseOrders.forEach((t) => batch.set(doc(db, "medsales-purchase-orders", t.id), t));
       invoices.forEach((t) => batch.set(doc(db, "medsales-invoices", t.id), t));
       team.forEach((t) => batch.set(doc(db, "medsales-team", t.id), t));
+      upaContracts.forEach((t) => batch.set(doc(db, "medsales-upa", t.id), t));
       await batch.commit();
-      alert(
-        "Firebase has been seeded with the mock data successfully! Refreshing...",
-      );
-      window.location.reload();
+      toast.success("Database seeded with sample data");
     } catch (e: any) {
-      alert("Error seeding data: " + e.message);
+      toast.error("Failed to seed database: " + e.message);
     }
   };
 
-  // ── Live chart data computed from firebase rows ────────────────────────────
-  // 1. Achievement by product line
-  const achievementByProductLine = useMemo(() => {
-    const lines: Record<string, { target: number; achieved: number }> = {};
-    targetStore.rows.forEach((row) => {
-      const line = row.productLine ?? row.focus ?? "Other";
-      if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
-      lines[line].target += row.target;
-    });
-
-    // Create a map of deal code to product line
-    const dealCodeToLine: Record<string, string> = {};
-    pipelineStore.rows.forEach(d => {
-      if (d.code) dealCodeToLine[d.code] = d.productLine ?? d.product ?? "Other";
-    });
-
-    invoiceStore.rows
-      .filter((inv) => (inv.invoiceStatus === "Paid" || inv.invoiceStatus === "Downpayment") && (!inv.issueDate || (inv.issueDate >= dateRange.from && inv.issueDate <= dateRange.to)))
-      .forEach((inv) => {
-        if (inv.code && dealCodeToLine[inv.code]) {
-          const line = dealCodeToLine[inv.code];
-          if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
-          lines[line].achieved += (inv.invoiceStatus === "Downpayment" ? (inv.downPayment || 0) : inv.amount);
-        }
-      });
-
-    return Object.entries(lines).map(([line, v]) => ({
-      line,
-      target: v.target,
-      achieved: v.achieved,
-    }));
-  }, [targetStore.rows, pipelineStore.rows, invoiceStore.rows, dateRange]);
-
-  // 2. Pipeline by stage — all stages including Closed Lost
-  const livePipelineByStage = useMemo(() => {
-    return stageOrder.map((stage) => ({
-      stage,
-      amount: filteredDeals.filter((row) => row.stage === stage)
-        .reduce((sum, row) => sum + row.amount, 0),
-      count: filteredDeals.filter((row) => row.stage === stage).length,
-    }));
-  }, [pipelineStore.rows]);
-
-  // 3. Commercial momentum — live from real deal close dates
-
-  const getGreeting = () => {
-    const hour = parseInt(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Africa/Cairo' }).format(new Date()));
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
-  const liveMomentum = useMemo(() => {
-    const now = new Date();
-
-    // Map for Deal margins
-    const dealCodeToMargin: Record<string, number> = {};
-    pipelineStore.rows.forEach(d => {
-      if (d.code) dealCodeToMargin[d.code] = d.margin ?? 0.3; // Default 30% margin if unknown
-    });
-
-    return Array.from({ length: 9 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - 8 + i, 1);
-      const yr = d.getFullYear();
-      const mo = d.getMonth();
-      const label = d.toLocaleString("en-US", { month: "short" });
-
-      const paidInvoices = invoiceStore.rows.filter((row) => {
-        if ((row.invoiceStatus !== "Paid" && row.invoiceStatus !== "Downpayment") || !row.issueDate) return false;
-        const cd = new Date(row.issueDate);
-        return cd.getFullYear() === yr && cd.getMonth() === mo;
-      });
-
-      const openDeals = filteredDeals.filter((row) => {
-        if (["Closed Won", "Closed Lost"].includes(row.stage)) return false;
-        if (!row.closeDate) return true; // Include deals without date
-        const cd = new Date(row.closeDate);
-        return cd.getFullYear() === yr && cd.getMonth() === mo;
-      });
-      return {
-        month: label,
-        achieved: paidInvoices.reduce((s, r) => s + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0),
-        pipeline: openDeals.reduce((s, r) => s + r.amount, 0),
-        collected: paidInvoices.reduce((s, r) => {
-          const margin = (r.code && dealCodeToMargin[r.code]) ? dealCodeToMargin[r.code] : 0.3;
-          return s + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount) * margin;
-        }, 0),
-      };
-    });
-  }, [pipelineStore.rows, invoiceStore.rows]);
-
   return (
     <PageFrame>
-      <SectionHeader
-        title={`${getGreeting()}, ${userName}.`}
+      <RouteTableHeader
+        title={`Welcome back, ${userName}`}
+        description="Here is what's happening with your business today."
+        search=""
+        setSearch={() => {}}
+        filter=""
+        setFilter={() => {}}
+        filterOptions={[]}
         action={
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 border border-[#e5e8ea] rounded-md px-2 py-1.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all focus-within:border-[#1677ff] focus-within:ring-2 focus-within:ring-[#1677ff]/10">
-              <CalendarDays size={14} className="text-[#8b98aa]" />
-              <DatePicker
-                selected={dateRange.from ? new Date(`${dateRange.from}T00:00:00`) : null}
-                onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, from: date ? toLocalISO(date) : "" }))}
-                dateFormat="dd-MM-yyyy"
-                placeholderText="Start Date"
-                showMonthDropdown
-                showYearDropdown
-                dropdownMode="select"
-                className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
-              />
-              <span className="text-[12px] font-bold text-[#a0abba] px-1">→</span>
-              <DatePicker
-                selected={dateRange.to ? new Date(`${dateRange.to}T00:00:00`) : null}
-                onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, to: date ? toLocalISO(date) : "" }))}
-                dateFormat="dd-MM-yyyy"
-                placeholderText="End Date"
-                showMonthDropdown
-                showYearDropdown
-                dropdownMode="select"
-                className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
-              />
-            </div>
-            <ReportToolbar
-              title="MedSales CRM dashboard"
-              headers={["Metric", "Value", "Context"]}
-              rows={dashboardExportRows}
-              fileName="medsales-dashboard"
-            />
+          <div className="crm-report-actions">
+            <Button className="btn-secondary" onClick={handleSeed}>
+              Seed Demo Data
+            </Button>
+            <Button className="btn-secondary">
+              <CalendarDays size={14} className="mr-2" />
+              This year
+            </Button>
+            <Button className="btn-primary">Download report</Button>
           </div>
         }
       />
 
+      <h3 className="font-semibold text-lg mt-4 mb-2">Total Business (Converted to EGP)</h3>
       <div className="crm-stat-grid crm-stat-grid-3">
-
         <StatCard
-          label="Revenue achieved"
-          value={formatCurrency(dashboardAchieved, true)}
+          label="Total Revenue Achieved"
+          value={formatCurrencyEGP(totalAchievedEGP, true)}
           helper={`${Math.round(dashboardAttainment * 100)}% attainment`}
           accent="teal"
         />
         <StatCard
-          label="Open pipeline"
-          value={formatCurrency(dashboardOpenPipeline, true)}
-          helper={`${dashboardActiveDeals} active deals`}
+          label="Total Open Pipeline"
+          value={formatCurrencyEGP(totalOpenPipelineEGP, true)}
+          helper={`${totalActiveDeals} total active deals`}
           accent="amber"
         />
         <StatCard
-          label="Invoices at risk"
-          value={formatCurrency(dashboardOverdueExposure, true)}
-          helper={`${invoiceStore.rows.filter((row) => row.invoiceStatus === "Overdue").length} overdue invoices`}
+          label="Total Invoices at Risk"
+          value={formatCurrencyEGP(totalOverdueEGP, true)}
+          helper="Combined overdue exposure"
           accent="rose"
-          trend="-4.2%"
         />
       </div>
 
-      <div className="crm-dashboard-grid">
-        <ChartCard
-          title="Achievement by product line"
-          subtitle="Won deals vs target per product line · EUR"
-        >
-          <div className="crm-chart-wrap">
-            <ResponsiveContainer width="100%" height={270}>
-              <BarChart
-                data={achievementByProductLine}
-                margin={{ top: 12, right: 16, left: -12, bottom: 0 }}
-                barGap={8}
-              >
-                <CartesianGrid vertical={false} stroke="#edf0f5" />
-                <XAxis
-                  dataKey="line"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#8b98aa" }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#8b98aa" }}
-                  tickFormatter={(value: number) =>
-                    `€${Math.round(value / 1000)}k`
-                  }
-                />
-                <Tooltip
-                  {...chartTooltip}
-                  formatter={(value: any) => formatCurrency(Number(value ?? 0))}
-                />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: 11, color: "#6e7c92" }}
-                />
-                <Bar
-                  name="Target"
-                  dataKey="target"
-                  fill="#dfe5ee"
-                  radius={[5, 5, 0, 0]}
-                />
-                <Bar
-                  name="Achieved"
-                  dataKey="achieved"
-                  fill="#2a9d8f"
-                  radius={[5, 5, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-
-        <ChartCard
-          title="Pipeline by stage"
-          subtitle="Deal count and total value per stage · EUR"
-        >
-          <div className="crm-chart-wrap">
-            <ResponsiveContainer width="100%" height={270}>
-              <BarChart
-                data={livePipelineByStage}
-                layout="vertical"
-                margin={{ top: 8, right: 18, left: 18, bottom: 0 }}
-              >
-                <CartesianGrid horizontal={false} stroke="#edf0f5" />
-                <XAxis
-                  type="number"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#8b98aa" }}
-                  tickFormatter={(value: number) =>
-                    `€${Math.round(value / 1_000_000)}M`
-                  }
-                />
-                <YAxis
-                  dataKey="stage"
-                  type="category"
-                  width={82}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#6e7c92" }}
-                />
-                <Tooltip
-                  {...chartTooltip}
-                  formatter={(value: any, name: any, props: any) => [
-                    `${formatCurrency(Number(value ?? 0))} (${props.payload.count} deal${props.payload.count !== 1 ? 's' : ''})`,
-                    "Value",
-                  ]}
-                />
-                <Bar dataKey="amount" name="Pipeline" radius={[0, 5, 5, 0]}>
-                  {livePipelineByStage.map((entry) => (
-                    <Cell key={entry.stage} fill={stageColors[entry.stage]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-
-        <ChartCard
-          title="Invoices mix"
-          subtitle={`${formatCurrency(totalInvoiced)} invoiced across four records`}
-        >
-          <div className="crm-collection-chart">
-            <ResponsiveContainer width="48%" height={210}>
-              <PieChart>
-                <Pie
-                  data={collectionsByStatus}
-                  dataKey="amount"
-                  nameKey="status"
-                  innerRadius={58}
-                  outerRadius={82}
-                  paddingAngle={4}
-                >
-                  {collectionsByStatus.map((entry: { status: "Paid" | "Issued" | "Downpayment" | "Overdue"; amount: number; count: number }) => (
-                    <Cell
-                      key={entry.status}
-                      fill={
-                        (
-                          {
-                            Paid: "#2a9d8f",
-                            Issued: "#5b6b8c",
-                            Downpayment: "#f59e0b",
-                            Overdue: "#d86c75",
-                          } as Record<string, string>
-                        )[entry.status]
-                      }
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  {...chartTooltip}
-                  formatter={(value: any) => formatCurrency(Number(value ?? 0))}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex-1 space-y-3">
-              {collectionsByStatus.map((entry) => (
-                <div
-                  key={entry.status}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-2 text-[12px] text-[#6f7d92]">
-                    <span
-                      className="crm-legend-dot"
-                      style={{
-                        backgroundColor: {
-                          Paid: "#2a9d8f",
-                          Issued: "#5b6b8c",
-                          Downpayment: "#f59e0b",
-                          Overdue: "#d86c75",
-                        }[entry.status],
-                      }}
-                    />
-                    {entry.status}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[12px] font-bold text-[#27354b]">
-                      {formatCurrency(entry.amount, true)}
-                    </div>
-                    <div className="text-[10px] text-[#a0abba]">
-                      {entry.count} invoice{entry.count > 1 ? "s" : ""}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </ChartCard>
-
-        <ChartCard
-          title="Commercial momentum"
-          subtitle="Monthly movement across revenue, pipeline, and invoices"
-        >
-          <div className="crm-chart-wrap">
-            <ResponsiveContainer width="100%" height={210}>
-              <ComposedChart
-                data={liveMomentum}
-                margin={{ top: 12, right: 8, left: -12, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2a9d8f" stopOpacity={0.22} />
-                    <stop offset="95%" stopColor="#2a9d8f" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} stroke="#edf0f5" />
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#8b98aa" }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#8b98aa" }}
-                  tickFormatter={(value: number) =>
-                    `€${Math.round(value / 1000)}k`
-                  }
-                />
-                <Tooltip
-                  {...chartTooltip}
-                  labelFormatter={(label) => `Month: ${label}`}
-                  formatter={(value: any, name: any) => [
-                    formatCurrency(Number(value ?? 0)),
-                    name,
-                  ]}
-                />
-                <Legend
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: 11, color: "#6e7c92" }}
-                />
-                <Area
-                  type="monotone"
-                  name="Revenue Achieved"
-                  dataKey="achieved"
-                  stroke="#2a9d8f"
-                  fill="url(#revenueFill)"
-                  strokeWidth={2.5}
-                />
-                <Line
-                  type="monotone"
-                  name="Gross Profit"
-                  dataKey="collected"
-                  stroke="#f4a261"
-                  strokeWidth={2.5}
-                  dot={false}
-                />
-                <Line
-                  type="monotone"
-                  name="Open Pipeline"
-                  dataKey="pipeline"
-                  stroke="#5b6b8c"
-                  strokeWidth={2}
-                  dot={false}
-                  strokeDasharray="4 5"
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
+      <h3 className="font-semibold text-lg mt-6 mb-2">EUR Business</h3>
+      <div className="crm-stat-grid crm-stat-grid-3">
+        <StatCard label="Revenue Achieved" value={formatCurrency(metricsEUR.dashboardAchieved, true)} accent="teal" helper="-" />
+        <StatCard label="Open Pipeline" value={formatCurrency(metricsEUR.dashboardOpenPipeline, true)} accent="amber" helper="-" />
+        <StatCard label="Invoices at Risk" value={formatCurrency(metricsEUR.dashboardOverdueExposure, true)} accent="rose" helper="-" />
       </div>
 
+      <h3 className="font-semibold text-lg mt-6 mb-2">USD Business</h3>
+      <div className="crm-stat-grid crm-stat-grid-3">
+        <StatCard label="Revenue Achieved" value={formatCurrencyUSD(metricsUSD.dashboardAchieved, true)} accent="teal" helper="-" />
+        <StatCard label="Open Pipeline" value={formatCurrencyUSD(metricsUSD.dashboardOpenPipeline, true)} accent="amber" helper="-" />
+        <StatCard label="Invoices at Risk" value={formatCurrencyUSD(metricsUSD.dashboardOverdueExposure, true)} accent="rose" helper="-" />
+      </div>
+
+      <h3 className="font-semibold text-lg mt-6 mb-2">EGP Business</h3>
+      <div className="crm-stat-grid crm-stat-grid-3">
+        <StatCard label="Revenue Achieved" value={formatCurrencyEGP(metricsEGP.dashboardAchieved, true)} accent="teal" helper="-" />
+        <StatCard label="Open Pipeline" value={formatCurrencyEGP(metricsEGP.dashboardOpenPipeline, true)} accent="amber" helper="-" />
+        <StatCard label="Invoices at Risk" value={formatCurrencyEGP(metricsEGP.dashboardOverdueExposure, true)} accent="rose" helper="-" />
+      </div>
     </PageFrame>
   );
 }
+
 
 function DataTable({
   children,
@@ -1353,9 +1016,9 @@ export function ForecastPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All stages");
   const [adding, setAdding] = useState(false);
-  const [pipelineMode, setPipelineMode] = useState<"EUR" | "USD">("EUR");
-  const currentRate = pipelineMode === "EUR" ? eurToEgp : usdToEgp;
-  const currentFormatter = pipelineMode === "EUR" ? formatCurrency : formatCurrencyUSD;
+  const [pipelineMode, setPipelineMode] = useState<"EUR" | "USD" | "EGP">("EUR");
+  const currentRate = pipelineMode === "EUR" ? eurToEgp : pipelineMode === "USD" ? usdToEgp : 1;
+  const currentFormatter = pipelineMode === "EUR" ? formatCurrency : pipelineMode === "USD" ? formatCurrencyUSD : formatCurrencyEGP;
   const [draft, setDraft] = useState<Record<string, string>>({
     code: "",
     productLine: "",
@@ -1403,7 +1066,7 @@ export function ForecastPage() {
     }
   };
 
-  const store = useEditableRows(pipelineMode === "EUR" ? "medsales-forecast" : "medsales-forecast-usd", deals);
+  const store = useEditableRows(pipelineMode === "EUR" ? "medsales-forecast" : pipelineMode === "USD" ? "medsales-forecast-usd" : "medsales-forecast-egp", deals);
   const targetStore = useEditableRows("medsales-targets", []);
   useHighlightRow(store.rows);
   const productLineOptions = Array.from(new Set(targetStore.rows.map((r: any) => r.productLine).filter(Boolean))) as string[];
@@ -1472,7 +1135,7 @@ export function ForecastPage() {
   return (
     <PageFrame>
       <RouteTableHeader
-        title={pipelineMode === "EUR" ? "Sales Pipeline" : "Sales Pipeline (USD)"}
+        title={`Sales Pipeline (${pipelineMode})`}
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -1480,12 +1143,14 @@ export function ForecastPage() {
         filterOptions={["All stages", ...stageOrder]}
         action={
           <div className="crm-report-actions">
-            <Button
-              className="btn-secondary"
-              onClick={() => setPipelineMode(pipelineMode === "EUR" ? "USD" : "EUR")}
-            >
-              Switch to {pipelineMode === "EUR" ? "USD" : "EUR"}
-            </Button>
+            <Select value={pipelineMode} onValueChange={(val: any) => setPipelineMode(val)}>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EGP">EGP</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               className="btn-secondary"
               onClick={() => setAdding(true)}
@@ -1509,7 +1174,7 @@ export function ForecastPage() {
                 "Next action",
               ]}
               rows={exportRows}
-              fileName={pipelineMode === "EUR" ? "medsales-forecast" : "medsales-forecast-usd"}
+              fileName={pipelineMode === "EUR" ? "medsales-forecast" : pipelineMode === "USD" ? "medsales-forecast-usd" : "medsales-forecast-egp"}
               editing={store.editing}
               onEdit={() => store.setEditing(true)}
               onSave={store.save}
@@ -1777,8 +1442,8 @@ export function PurchaseOrdersPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All statuses");
   const [adding, setAdding] = useState(false);
-  const [poMode, setPoMode] = useState<"Default" | "Diagon">("Default");
-  const poFormatter = poMode === "Default" ? formatCurrency : formatCurrencyEGP;
+  const [poMode, setPoMode] = useState<"EUR" | "USD" | "EGP">("EUR");
+  const poFormatter = poMode === "EUR" ? formatCurrency : poMode === "USD" ? formatCurrencyUSD : formatCurrencyEGP;
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
     amount: "",
@@ -1824,7 +1489,7 @@ export function PurchaseOrdersPage() {
       toast.error("Error converting to Invoice: " + e.message);
     }
   };
-  const store = useEditableRows<PurchaseOrderRow>(poMode === "Default" ? "medsales-purchase-orders" : "medsales-purchase-orders-diagon", []);
+  const store = useEditableRows<PurchaseOrderRow>(poMode === "EUR" ? "medsales-purchase-orders" : poMode === "USD" ? "medsales-purchase-orders-usd" : "medsales-purchase-orders-egp", []);
   useHighlightRow(store.rows);
 
   const rows = store.rows.filter(
@@ -1867,7 +1532,7 @@ export function PurchaseOrdersPage() {
   return (
     <PageFrame>
       <RouteTableHeader
-        title={poMode === "Default" ? "Purchase orders" : "Purchase orders (Diagon)"}
+        title={`Purchase orders (${poMode})`}
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -1875,12 +1540,14 @@ export function PurchaseOrdersPage() {
         filterOptions={["All statuses", "Pending", "Approved", "Shipped", "Invoiced"]}
         action={
           <div className="crm-report-actions">
-            <Button
-              className="btn-secondary"
-              onClick={() => setPoMode(poMode === "Default" ? "Diagon" : "Default")}
-            >
-              Switch to {poMode === "Default" ? "Diagon POs" : "Default POs"}
-            </Button>
+            <Select value={poMode} onValueChange={(val: any) => setPoMode(val)}>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EGP">EGP</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               className="btn-secondary"
               onClick={() => setAdding(true)}
@@ -1899,7 +1566,7 @@ export function PurchaseOrdersPage() {
                 "Follow-up",
               ]}
               rows={exportRows}
-              fileName={poMode === "Default" ? "medsales-purchase-orders" : "medsales-purchase-orders-diagon"}
+              fileName={poMode === "EUR" ? "medsales-purchase-orders" : poMode === "USD" ? "medsales-purchase-orders-usd" : "medsales-purchase-orders-egp"}
               editing={store.editing}
               onEdit={() => store.setEditing(true)}
               onSave={store.save}
@@ -2116,6 +1783,8 @@ export function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All statuses");
   const [adding, setAdding] = useState(false);
+  const [invMode, setInvMode] = useState<"EUR" | "USD" | "EGP">("EUR");
+  const invFormatter = invMode === "EUR" ? formatCurrency : invMode === "USD" ? formatCurrencyUSD : formatCurrencyEGP;
   const [draft, setDraft] = useState<Record<string, string>>({
     client: "",
     po: "—",
@@ -2127,7 +1796,7 @@ export function InvoicesPage() {
     daysOverdue: "0",
     followUp: "",
   });
-  const store = useEditableRows<InvoiceRow>("medsales-invoices", []);
+  const store = useEditableRows<InvoiceRow>(invMode === "EUR" ? "medsales-invoices" : invMode === "USD" ? "medsales-invoices-usd" : "medsales-invoices-egp", []);
 
   useEffect(() => {
     if (store.editing) return;
@@ -2221,7 +1890,7 @@ export function InvoicesPage() {
   return (
     <PageFrame>
       <RouteTableHeader
-        title="Invoices"
+        title={`Invoices (${invMode})`}
         search={search}
         setSearch={setSearch}
         filter={filter}
@@ -2229,6 +1898,14 @@ export function InvoicesPage() {
         filterOptions={["All statuses", "Issued", "Paid", "Downpayment", "Overdue"]}
         action={
           <div className="crm-report-actions">
+            <Select value={invMode} onValueChange={(val: any) => setInvMode(val)}>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EGP">EGP</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               className="btn-secondary"
               onClick={() => setAdding(true)}
@@ -2243,13 +1920,13 @@ export function InvoicesPage() {
                 "Amount",
                 "Down payment",
                 "Status",
-                "Issue date",
+                "Invoice date",
                 "Due date",
                 "Days overdue",
                 "Follow-up",
               ]}
               rows={exportRows}
-              fileName="medsales-invoices"
+              fileName={invMode === "EUR" ? "medsales-invoices" : invMode === "USD" ? "medsales-invoices-usd" : "medsales-invoices-egp"}
               editing={store.editing}
               onEdit={() => store.setEditing(true)}
               onSave={store.save}
@@ -2271,7 +1948,7 @@ export function InvoicesPage() {
             { name: "downPayment", label: "Down payment", type: "number", min: 0, step: 1, required: false },
             { name: "invoiceStatus", label: "Invoice Status", options: ["Issued", "Downpayment", "Paid"] },
             { name: "shippingStatus", label: "Shipping Status", options: ["In stock", "Contacted supplier", "Shipped", "Delivered to client"] },
-            { name: "issueDate", label: "Issue date", type: "date", required: true },
+            { name: "issueDate", label: "Invoice date", type: "date", required: true },
             { name: "dueDate", label: "Due date", type: "date", required: false },
             { name: "daysOverdue", label: "Days overdue", type: "number", min: 0, step: 1, required: false },
             { name: "followUp", label: "Follow-up", required: false },
@@ -2287,19 +1964,19 @@ export function InvoicesPage() {
       <div className="crm-stat-grid crm-stat-grid-3">
         <StatCard
           label="Total Issued Invoices"
-          value={formatCurrency(store.rows.reduce((sum, r) => sum + r.amount, 0), true)}
+          value={invFormatter(store.rows.reduce((sum, r) => sum + r.amount, 0), true)}
           helper={`${store.rows.length} invoices`}
           accent="navy"
         />
         <StatCard
           label="Total Revenue"
-          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Paid" || r.invoiceStatus === "Downpayment").reduce((sum, r) => sum + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0), true)}
+          value={invFormatter(store.rows.filter(r => r.invoiceStatus === "Paid" || r.invoiceStatus === "Downpayment").reduce((sum, r) => sum + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0), true)}
           helper={`${store.rows.reduce((sum, r) => sum + r.amount, 0) > 0 ? Math.round((store.rows.filter(r => r.invoiceStatus === "Paid" || r.invoiceStatus === "Downpayment").reduce((sum, r) => sum + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0) / store.rows.reduce((sum, r) => sum + r.amount, 0)) * 100) : 0}% collected`}
           accent="teal"
         />
         <StatCard
           label="Total Overdue"
-          value={formatCurrency(store.rows.filter(r => r.invoiceStatus === "Overdue" || (Number(r.daysOverdue) > 0 && r.invoiceStatus !== "Paid")).reduce((sum, r) => sum + r.amount, 0), true)}
+          value={invFormatter(store.rows.filter(r => r.invoiceStatus === "Overdue" || (Number(r.daysOverdue) > 0 && r.invoiceStatus !== "Paid")).reduce((sum, r) => sum + r.amount, 0), true)}
           helper="Past due date"
           accent="rose"
         />
@@ -2381,7 +2058,7 @@ export function InvoicesPage() {
                         }
                       />
                     ) : (
-                      formatCurrency(row.amount, true)
+                      invFormatter(row.amount, true)
                     )}
                   </td>
                   <td onDoubleClick={() => store.startEditingCell(`${row.id}-5`)}>
@@ -2397,7 +2074,7 @@ export function InvoicesPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span>{formatCurrency(row.downPayment ?? 0, true)}</span>
+                        <span>{invFormatter(row.downPayment ?? 0, true)}</span>
                         <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                           {row.amount > 0 ? Math.round(((row.downPayment ?? 0) / row.amount) * 100) : 0}%
                         </span>
