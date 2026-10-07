@@ -288,14 +288,19 @@ export function DashboardPage() {
 
   const dashboardAttainment = dashboardTargetTotal ? totalAchievedEGP / dashboardTargetTotal : 0;
 
-  // Combined invoice rows (USD & EGP converted to EUR equiv for charts)
+  // Combined invoice rows (USD & EUR converted to EGP equiv for charts)
   const allInvoiceRows = [
-    ...invoiceEUR.rows,
-    ...invoiceUSD.rows.map((r: InvoiceRow) => ({ ...r, amount: r.amount * (usdToEgp / eurToEgp), downPayment: (r.downPayment || 0) * (usdToEgp / eurToEgp) })),
-    ...invoiceEGP.rows.map((r: InvoiceRow) => ({ ...r, amount: r.amount / eurToEgp, downPayment: (r.downPayment || 0) / eurToEgp })),
+    ...invoiceEUR.rows.map((r: InvoiceRow) => ({ ...r, amount: r.amount * eurToEgp, downPayment: (r.downPayment || 0) * eurToEgp })),
+    ...invoiceUSD.rows.map((r: InvoiceRow) => ({ ...r, amount: r.amount * usdToEgp, downPayment: (r.downPayment || 0) * usdToEgp })),
+    ...invoiceEGP.rows,
   ];
 
-  const filteredEURDeals = useMemo(() => pipelineEUR.rows.filter((row: any) => !row.closeDate || (row.closeDate >= dateRange.from && row.closeDate <= dateRange.to)), [pipelineEUR.rows, dateRange]);
+  // Combined pipeline deals (USD & EUR converted to EGP equiv for charts)
+  const allDeals = useMemo(() => [
+    ...pipelineEUR.rows.map((r: any) => ({ ...r, amount: r.amount * eurToEgp })),
+    ...pipelineUSD.rows.map((r: any) => ({ ...r, amount: r.amount * usdToEgp })),
+    ...pipelineEGP.rows,
+  ].filter((row: any) => !row.closeDate || (row.closeDate >= dateRange.from && row.closeDate <= dateRange.to)), [pipelineEUR.rows, pipelineUSD.rows, pipelineEGP.rows, dateRange, eurToEgp, usdToEgp]);
 
   // Chart 1: Achievement by product line
   const achievementByProductLine = useMemo(() => {
@@ -303,7 +308,7 @@ export function DashboardPage() {
     targetStore.rows.forEach((row: any) => {
       const line = row.productLine ?? row.focus ?? "Other";
       if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
-      const rate = row.currency === "USD" ? (usdToEgp / eurToEgp) : row.currency === "EGP" ? (1 / eurToEgp) : 1;
+      const rate = row.currency === "USD" ? usdToEgp : row.currency === "EGP" ? 1 : eurToEgp;
       lines[line].target += row.target * rate;
     });
     const dealCodeToLine: Record<string, string> = {};
@@ -324,10 +329,10 @@ export function DashboardPage() {
   const livePipelineByStage = useMemo(() => {
     return stageOrder.map(stage => ({
       stage,
-      amount: filteredEURDeals.filter((row: any) => row.stage === stage).reduce((sum: number, row: any) => sum + row.amount, 0),
-      count: filteredEURDeals.filter((row: any) => row.stage === stage).length,
+      amount: allDeals.filter((row: any) => row.stage === stage).reduce((sum: number, row: any) => sum + row.amount, 0),
+      count: allDeals.filter((row: any) => row.stage === stage).length,
     }));
-  }, [filteredEURDeals]);
+  }, [allDeals]);
 
   // Chart 3: Invoice mix across all currencies
   const liveCollectionsByStatus = useMemo(() => {
@@ -359,7 +364,7 @@ export function DashboardPage() {
         const cd = new Date(row.issueDate);
         return cd.getFullYear() === yr && cd.getMonth() === mo;
       });
-      const openDeals = filteredEURDeals.filter((row: any) => {
+      const openDeals = allDeals.filter((row: any) => {
         if (["Closed Won", "Closed Lost"].includes(row.stage)) return false;
         if (!row.closeDate) return true;
         const cd = new Date(row.closeDate);
@@ -375,7 +380,7 @@ export function DashboardPage() {
         }, 0),
       };
     });
-  }, [pipelineEUR.rows, allInvoiceRows]);
+  }, [allDeals, allInvoiceRows]);
 
   const dashboardExportRows = [
     ["Total Revenue (EGP equiv)", totalAchievedEGP, `${Math.round(dashboardAttainment * 100)}% attainment`],
@@ -438,14 +443,14 @@ export function DashboardPage() {
 
       {/* Charts */}
       <div className="crm-dashboard-grid" style={{ marginTop: 24 }}>
-        <ChartCard title="Achievement by product line" subtitle="Won deals vs target · All currencies (EUR equiv)">
+        <ChartCard title="Achievement by product line" subtitle="Won deals vs target · All currencies (EGP equiv)">
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
               <BarChart data={achievementByProductLine} margin={{ top: 12, right: 16, left: -12, bottom: 0 }} barGap={8}>
                 <CartesianGrid vertical={false} stroke="#edf0f5" />
                 <XAxis dataKey="line" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `€${Math.round(v / 1000)}k`} />
-                <Tooltip {...chartTooltip} formatter={(value: any) => formatCurrency(Number(value ?? 0))} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `EGP ${Math.round(v / 1000)}k`} />
+                <Tooltip {...chartTooltip} formatter={(value: any) => formatCurrencyEGP(Number(value ?? 0))} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 11, color: "#6e7c92" }} />
                 <Bar name="Target" dataKey="target" fill="#dfe5ee" radius={[5, 5, 0, 0]} />
                 <Bar name="Achieved" dataKey="achieved" fill="#2a9d8f" radius={[5, 5, 0, 0]} />
@@ -454,14 +459,14 @@ export function DashboardPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Pipeline by stage" subtitle="Deal count and total value per stage · EUR">
+        <ChartCard title="Pipeline by stage" subtitle="Deal count and total value per stage · All currencies (EGP equiv)">
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={270}>
               <BarChart data={livePipelineByStage} layout="vertical" margin={{ top: 8, right: 18, left: 18, bottom: 0 }}>
                 <CartesianGrid horizontal={false} stroke="#edf0f5" />
-                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `€${Math.round(v / 1_000_000)}M`} />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `EGP ${Math.round(v / 1_000_000)}M`} />
                 <YAxis dataKey="stage" type="category" width={82} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6e7c92" }} />
-                <Tooltip {...chartTooltip} formatter={(value: any, _n: any, props: any) => [`${formatCurrency(Number(value ?? 0))} (${props.payload.count} deal${props.payload.count !== 1 ? 's' : ''})`, "Value"]} />
+                <Tooltip {...chartTooltip} formatter={(value: any, _n: any, props: any) => [`${formatCurrencyEGP(Number(value ?? 0))} (${props.payload.count} deal${props.payload.count !== 1 ? 's' : ''})`, "Value"]} />
                 <Bar dataKey="amount" name="Pipeline" radius={[0, 5, 5, 0]}>
                   {livePipelineByStage.map(entry => (<Cell key={entry.stage} fill={stageColors[entry.stage]} />))}
                 </Bar>
@@ -470,7 +475,7 @@ export function DashboardPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Invoices mix" subtitle="All invoice statuses · EUR + USD + EGP (EUR equiv)">
+        <ChartCard title="Invoices mix" subtitle="All invoice statuses · EUR + USD + EGP (EGP equiv)">
           <div className="crm-collection-chart">
             <ResponsiveContainer width="48%" height={210}>
               <PieChart>
@@ -479,7 +484,7 @@ export function DashboardPage() {
                     <Cell key={entry.status} fill={({ Paid: "#2a9d8f", Issued: "#5b6b8c", Downpayment: "#f59e0b", Overdue: "#d86c75" } as Record<string,string>)[entry.status] ?? "#ccc"} />
                   ))}
                 </Pie>
-                <Tooltip {...chartTooltip} formatter={(value: any) => formatCurrency(Number(value ?? 0))} />
+                <Tooltip {...chartTooltip} formatter={(value: any) => formatCurrencyEGP(Number(value ?? 0))} />
               </PieChart>
             </ResponsiveContainer>
             <div className="flex-1 space-y-3">
@@ -490,7 +495,7 @@ export function DashboardPage() {
                     {entry.status}
                   </div>
                   <div className="text-right">
-                    <div className="text-[12px] font-bold text-[#27354b]">{formatCurrency(entry.amount, true)}</div>
+                    <div className="text-[12px] font-bold text-[#27354b]">{formatCurrencyEGP(entry.amount, true)}</div>
                     <div className="text-[10px] text-[#a0abba]">{entry.count} invoice{entry.count > 1 ? "s" : ""}</div>
                   </div>
                 </div>
@@ -499,7 +504,7 @@ export function DashboardPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Commercial momentum" subtitle="Monthly movement · All currencies (EUR equiv)">
+        <ChartCard title="Commercial momentum" subtitle="Monthly movement · All currencies (EGP equiv)">
           <div className="crm-chart-wrap">
             <ResponsiveContainer width="100%" height={210}>
               <ComposedChart data={liveMomentum} margin={{ top: 12, right: 8, left: -12, bottom: 0 }}>
@@ -511,8 +516,8 @@ export function DashboardPage() {
                 </defs>
                 <CartesianGrid vertical={false} stroke="#edf0f5" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `€${Math.round(v / 1000)}k`} />
-                <Tooltip {...chartTooltip} labelFormatter={(label) => `Month: ${label}`} formatter={(value: any, name: any) => [formatCurrency(Number(value ?? 0)), name]} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `EGP ${Math.round(v / 1000)}k`} />
+                <Tooltip {...chartTooltip} labelFormatter={(label) => `Month: ${label}`} formatter={(value: any, name: any) => [formatCurrencyEGP(Number(value ?? 0)), name]} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 11, color: "#6e7c92" }} />
                 <Area type="monotone" name="Revenue Achieved" dataKey="achieved" stroke="#2a9d8f" fill="url(#revenueFill)" strokeWidth={2.5} />
                 <Line type="monotone" name="Gross Profit" dataKey="collected" stroke="#f4a261" strokeWidth={2.5} dot={false} />
