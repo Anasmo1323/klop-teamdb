@@ -7,6 +7,7 @@ export type TargetRow = {
   target: number;
   achieved: number;
   status: "On Track" | "Watch" | "At Risk" | "Setup";
+  currency?: "EUR" | "USD" | "EGP";
 };
 
 export type DealRow = { code?: string;

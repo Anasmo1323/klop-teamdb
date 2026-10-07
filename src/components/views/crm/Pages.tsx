@@ -245,7 +245,10 @@ export function DashboardPage() {
   const [dateRange, setDateRange] = useState({ from: "2026-01-01", to: "2026-12-31" });
   
   const targetStore = useEditableRows("medsales-targets", targets);
-  const dashboardTargetTotal = targetStore.rows.reduce((sum, row) => sum + row.target, 0);
+  const dashboardTargetTotal = targetStore.rows.reduce((sum, row) => {
+    const rate = row.currency === "USD" ? usdToEgp : row.currency === "EGP" ? 1 : eurToEgp;
+    return sum + row.target * rate;
+  }, 0);
 
   // EUR stores
   const pipelineEUR = useEditableRows("medsales-forecast", deals);
@@ -300,7 +303,8 @@ export function DashboardPage() {
     targetStore.rows.forEach((row: any) => {
       const line = row.productLine ?? row.focus ?? "Other";
       if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
-      lines[line].target += row.target;
+      const rate = row.currency === "USD" ? (usdToEgp / eurToEgp) : row.currency === "EGP" ? (1 / eurToEgp) : 1;
+      lines[line].target += row.target * rate;
     });
     const dealCodeToLine: Record<string, string> = {};
     pipelineEUR.rows.forEach((d: any) => { if (d.code) dealCodeToLine[d.code] = d.productLine ?? d.product ?? "Other"; });
@@ -902,10 +906,11 @@ export function TargetsPage() {
     productLine: "",
     target: "",
     status: "On Track",
+    currency: "EUR",
   });
   const { role } = useCrmAccess();
   const canEditTargets = role === "admin";
-  const { eurToEgp = 54 } = useExchangeRates();
+  const { eurToEgp = 54, usdToEgp = 50 } = useExchangeRates();
 
   const store = useEditableRows("medsales-targets", targets);
   const pipelineStore = useEditableRows("medsales-forecast", deals);
@@ -944,6 +949,7 @@ export function TargetsPage() {
       row.id,
       productLine,
       row.target,
+      row.currency || "EUR",
       computedAchieved,
       `${row.target ? Math.round((computedAchieved / row.target) * 100) : 0}%`,
       row.status,
@@ -967,8 +973,9 @@ export function TargetsPage() {
       target: Number(draft.target) || 0,
       achieved: 0,
       status: draft.status as TargetRow["status"],
+      currency: (draft.currency as "EUR" | "USD" | "EGP") || "EUR",
     });
-    setDraft({ productLine: "", target: "", status: "On Track" });
+    setDraft({ productLine: "", target: "", status: "On Track", currency: "EUR" });
     setAdding(false);
     toast.success("Target record added. Save changes to keep it.");
   };
@@ -997,9 +1004,10 @@ export function TargetsPage() {
               headers={[
                 "Target ID",
                 "Product Line",
-                "Target (€)",
+                "Target",
+                "Currency",
                 "Target (EGP)",
-                "Achieved (€)",
+                "Achieved",
                 "Achieved (EGP)",
                 "Progress",
                 "Status",
@@ -1031,6 +1039,11 @@ export function TargetsPage() {
               name: "status",
               label: "Status",
               options: ["On Track", "Watch", "At Risk", "Setup"],
+            },
+            {
+              name: "currency",
+              label: "Currency",
+              options: ["EUR", "USD", "EGP"],
             },
           ]}
           values={draft}
@@ -1067,9 +1080,10 @@ export function TargetsPage() {
           <thead>
             <tr>
               <SortableHeader label="Product Line" sortKey="productLine" sortConfig={sortConfig} requestSort={requestSort} />
-              <th>Target (€)</th>
+              <th>Target</th>
+              <th>Currency</th>
               <th>Target (EGP)</th>
-              <th>Achieved (€)</th>
+              <th>Achieved</th>
               <th>Achieved (EGP)</th>
               <th>Progress</th>
               <SortableHeader label="Invoice Status" sortKey="invoiceStatus" sortConfig={sortConfig} requestSort={requestSort} />
@@ -1118,12 +1132,35 @@ export function TargetsPage() {
                         }
                       />
                     ) : (
-                      formatCurrency(row.target, true)
+                      (row.currency === "USD" ? formatCurrencyUSD : row.currency === "EGP" ? formatCurrencyEGP : formatCurrency)(row.target, true)
                     )}
                   </td>
-                  <td>{formatCurrencyEGP(row.target * eurToEgp, true)}</td>
-                  <td>{formatCurrency(computedAchieved, true)}</td>
-                  <td>{formatCurrencyEGP(computedAchieved * eurToEgp, true)}</td>
+                  <td onDoubleClick={canEditTargets ? () => store.startEditingCell(`${row.id}-3`) : undefined}>
+                    {store.editingCell === `${row.id}-${3}` ? (
+                      <Select
+                        value={row.currency || "EUR"}
+                        onValueChange={(value) =>
+                          store.updateRow(originalIndex, {
+                            currency: value as "EUR" | "USD" | "EGP",
+                          })
+                        }
+                      >
+                        <SelectTrigger style={{ height: 32, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", fontSize: 13, background: "var(--surface)" }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EGP">EGP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      row.currency || "EUR"
+                    )}
+                  </td>
+                  <td>{formatCurrencyEGP(row.target * (row.currency === "USD" ? usdToEgp : row.currency === "EGP" ? 1 : eurToEgp), true)}</td>
+                  <td>{(row.currency === "USD" ? formatCurrencyUSD : row.currency === "EGP" ? formatCurrencyEGP : formatCurrency)(computedAchieved, true)}</td>
+                  <td>{formatCurrencyEGP(computedAchieved * (row.currency === "USD" ? usdToEgp : row.currency === "EGP" ? 1 : eurToEgp), true)}</td>
                   <td>
                     <div className="flex items-center gap-2">
                       <div className="crm-progress">
