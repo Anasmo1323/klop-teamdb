@@ -285,6 +285,100 @@ export function DashboardPage() {
 
   const dashboardAttainment = dashboardTargetTotal ? totalAchievedEGP / dashboardTargetTotal : 0;
 
+  // Combined invoice rows (USD & EGP converted to EUR equiv for charts)
+  const allInvoiceRows = [
+    ...invoiceEUR.rows,
+    ...invoiceUSD.rows.map((r: InvoiceRow) => ({ ...r, amount: r.amount * (usdToEgp / eurToEgp), downPayment: (r.downPayment || 0) * (usdToEgp / eurToEgp) })),
+    ...invoiceEGP.rows.map((r: InvoiceRow) => ({ ...r, amount: r.amount / eurToEgp, downPayment: (r.downPayment || 0) / eurToEgp })),
+  ];
+
+  const filteredEURDeals = useMemo(() => pipelineEUR.rows.filter((row: any) => !row.closeDate || (row.closeDate >= dateRange.from && row.closeDate <= dateRange.to)), [pipelineEUR.rows, dateRange]);
+
+  // Chart 1: Achievement by product line
+  const achievementByProductLine = useMemo(() => {
+    const lines: Record<string, { target: number; achieved: number }> = {};
+    targetStore.rows.forEach((row: any) => {
+      const line = row.productLine ?? row.focus ?? "Other";
+      if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
+      lines[line].target += row.target;
+    });
+    const dealCodeToLine: Record<string, string> = {};
+    pipelineEUR.rows.forEach((d: any) => { if (d.code) dealCodeToLine[d.code] = d.productLine ?? d.product ?? "Other"; });
+    allInvoiceRows
+      .filter((inv: InvoiceRow) => (inv.invoiceStatus === "Paid" || inv.invoiceStatus === "Downpayment") && (!inv.issueDate || (inv.issueDate >= dateRange.from && inv.issueDate <= dateRange.to)))
+      .forEach((inv: InvoiceRow) => {
+        if (inv.code && dealCodeToLine[inv.code]) {
+          const line = dealCodeToLine[inv.code];
+          if (!lines[line]) lines[line] = { target: 0, achieved: 0 };
+          lines[line].achieved += (inv.invoiceStatus === "Downpayment" ? (inv.downPayment || 0) : inv.amount);
+        }
+      });
+    return Object.entries(lines).map(([line, v]) => ({ line, target: v.target, achieved: v.achieved }));
+  }, [targetStore.rows, pipelineEUR.rows, allInvoiceRows, dateRange]);
+
+  // Chart 2: Pipeline by stage
+  const livePipelineByStage = useMemo(() => {
+    return stageOrder.map(stage => ({
+      stage,
+      amount: filteredEURDeals.filter((row: any) => row.stage === stage).reduce((sum: number, row: any) => sum + row.amount, 0),
+      count: filteredEURDeals.filter((row: any) => row.stage === stage).length,
+    }));
+  }, [filteredEURDeals]);
+
+  // Chart 3: Invoice mix across all currencies
+  const liveCollectionsByStatus = useMemo(() => {
+    const groups: Record<string, { amount: number; count: number }> = { Issued: { amount: 0, count: 0 }, Downpayment: { amount: 0, count: 0 }, Paid: { amount: 0, count: 0 }, Overdue: { amount: 0, count: 0 } };
+    allInvoiceRows.forEach((row: InvoiceRow) => {
+      const status = row.invoiceStatus || "Issued";
+      if (groups[status]) { groups[status].amount += row.amount; groups[status].count += 1; }
+    });
+    return Object.entries(groups).map(([status, v]) => ({ status, amount: v.amount, count: v.count }));
+  }, [allInvoiceRows]);
+
+  // Chart 4: Commercial momentum
+  const getGreeting = () => {
+    const hour = parseInt(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'Africa/Cairo' }).format(new Date()));
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+  const liveMomentum = useMemo(() => {
+    const now = new Date();
+    const dealCodeToMargin: Record<string, number> = {};
+    pipelineEUR.rows.forEach((d: any) => { if (d.code) dealCodeToMargin[d.code] = d.margin ?? 0.3; });
+    return Array.from({ length: 9 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 8 + i, 1);
+      const yr = d.getFullYear(); const mo = d.getMonth();
+      const label = d.toLocaleString("en-US", { month: "short" });
+      const paidInvoices = allInvoiceRows.filter((row: InvoiceRow) => {
+        if ((row.invoiceStatus !== "Paid" && row.invoiceStatus !== "Downpayment") || !row.issueDate) return false;
+        const cd = new Date(row.issueDate);
+        return cd.getFullYear() === yr && cd.getMonth() === mo;
+      });
+      const openDeals = filteredEURDeals.filter((row: any) => {
+        if (["Closed Won", "Closed Lost"].includes(row.stage)) return false;
+        if (!row.closeDate) return true;
+        const cd = new Date(row.closeDate);
+        return cd.getFullYear() === yr && cd.getMonth() === mo;
+      });
+      return {
+        month: label,
+        achieved: paidInvoices.reduce((s: number, r: InvoiceRow) => s + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount), 0),
+        pipeline: openDeals.reduce((s: number, r: any) => s + r.amount, 0),
+        collected: paidInvoices.reduce((s: number, r: InvoiceRow) => {
+          const margin = (r.code && dealCodeToMargin[r.code]) ? dealCodeToMargin[r.code] : 0.3;
+          return s + (r.invoiceStatus === "Downpayment" ? (r.downPayment || 0) : r.amount) * margin;
+        }, 0),
+      };
+    });
+  }, [pipelineEUR.rows, allInvoiceRows]);
+
+  const dashboardExportRows = [
+    ["Total Revenue (EGP equiv)", totalAchievedEGP, `${Math.round(dashboardAttainment * 100)}% attainment`],
+    ["Open Pipeline (EUR)", metricsEUR.dashboardOpenPipeline, `${metricsEUR.activeDeals} deals`],
+    ["Invoices at Risk", metricsEUR.dashboardOverdueExposure + metricsUSD.dashboardOverdueExposure + metricsEGP.dashboardOverdueExposure, "Combined"],
+  ];
+
   const handleSeed = async () => {
     try {
       const batch = writeBatch(db);
@@ -303,69 +397,146 @@ export function DashboardPage() {
 
   return (
     <PageFrame>
-      <RouteTableHeader
-        title={`Welcome back, ${userName}`}
-        description="Here is what's happening with your business today."
-        search=""
-        setSearch={() => {}}
-        filter=""
-        setFilter={() => {}}
-        filterOptions={[]}
+      <SectionHeader
+        title={`${getGreeting()}, ${userName}.`}
         action={
-          <div className="crm-report-actions">
-            <Button className="btn-secondary" onClick={handleSeed}>
-              Seed Demo Data
-            </Button>
-            <Button className="btn-secondary">
-              <CalendarDays size={14} className="mr-2" />
-              This year
-            </Button>
-            <Button className="btn-primary">Download report</Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 border border-[#e5e8ea] rounded-md px-2 py-1.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all focus-within:border-[#1677ff] focus-within:ring-2 focus-within:ring-[#1677ff]/10">
+              <CalendarDays size={14} className="text-[#8b98aa]" />
+              <DatePicker
+                selected={dateRange.from ? new Date(`${dateRange.from}T00:00:00`) : null}
+                onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, from: date ? toLocalISO(date) : "" }))}
+                dateFormat="dd-MM-yyyy" placeholderText="Start Date"
+                showMonthDropdown showYearDropdown dropdownMode="select"
+                className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
+              />
+              <span className="text-[12px] font-bold text-[#a0abba] px-1">&rarr;</span>
+              <DatePicker
+                selected={dateRange.to ? new Date(`${dateRange.to}T00:00:00`) : null}
+                onChange={(date: Date | null) => setDateRange(prev => ({ ...prev, to: date ? toLocalISO(date) : "" }))}
+                dateFormat="dd-MM-yyyy" placeholderText="End Date"
+                showMonthDropdown showYearDropdown dropdownMode="select"
+                className="w-[75px] text-[12px] font-medium bg-transparent outline-none border-none text-[#27354b] cursor-pointer"
+              />
+            </div>
+            <ReportToolbar title="MedSales CRM dashboard" headers={["Metric", "Value", "Context"]} rows={dashboardExportRows} fileName="medsales-dashboard" />
           </div>
         }
       />
 
+      {/* Total EGP */}
       <h3 className="font-semibold text-lg mt-4 mb-2">Total Business (Converted to EGP)</h3>
       <div className="crm-stat-grid crm-stat-grid-3">
-        <StatCard
-          label="Total Revenue Achieved"
-          value={formatCurrencyEGP(totalAchievedEGP, true)}
-          helper={`${Math.round(dashboardAttainment * 100)}% attainment`}
-          accent="teal"
-        />
-        <StatCard
-          label="Total Open Pipeline"
-          value={formatCurrencyEGP(totalOpenPipelineEGP, true)}
-          helper={`${totalActiveDeals} total active deals`}
-          accent="amber"
-        />
-        <StatCard
-          label="Total Invoices at Risk"
-          value={formatCurrencyEGP(totalOverdueEGP, true)}
-          helper="Combined overdue exposure"
-          accent="rose"
-        />
+        <StatCard label="Total Revenue Achieved" value={formatCurrencyEGP(totalAchievedEGP, true)} helper={`${Math.round(dashboardAttainment * 100)}% attainment`} accent="teal" />
+        <StatCard label="Total Open Pipeline" value={formatCurrencyEGP(totalOpenPipelineEGP, true)} helper={`${totalActiveDeals} active deals`} accent="amber" />
+        <StatCard label="Total Invoices at Risk" value={formatCurrencyEGP(totalOverdueEGP, true)} helper="Combined overdue exposure" accent="rose" />
       </div>
 
-      <h3 className="font-semibold text-lg mt-6 mb-2">EUR Business</h3>
+      {/* Charts */}
+      <div className="crm-dashboard-grid" style={{ marginTop: 24 }}>
+        <ChartCard title="Achievement by product line" subtitle="Won deals vs target · All currencies (EUR equiv)">
+          <div className="crm-chart-wrap">
+            <ResponsiveContainer width="100%" height={270}>
+              <BarChart data={achievementByProductLine} margin={{ top: 12, right: 16, left: -12, bottom: 0 }} barGap={8}>
+                <CartesianGrid vertical={false} stroke="#edf0f5" />
+                <XAxis dataKey="line" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `€${Math.round(v / 1000)}k`} />
+                <Tooltip {...chartTooltip} formatter={(value: any) => formatCurrency(Number(value ?? 0))} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11, color: "#6e7c92" }} />
+                <Bar name="Target" dataKey="target" fill="#dfe5ee" radius={[5, 5, 0, 0]} />
+                <Bar name="Achieved" dataKey="achieved" fill="#2a9d8f" radius={[5, 5, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <ChartCard title="Pipeline by stage" subtitle="Deal count and total value per stage · EUR">
+          <div className="crm-chart-wrap">
+            <ResponsiveContainer width="100%" height={270}>
+              <BarChart data={livePipelineByStage} layout="vertical" margin={{ top: 8, right: 18, left: 18, bottom: 0 }}>
+                <CartesianGrid horizontal={false} stroke="#edf0f5" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `€${Math.round(v / 1_000_000)}M`} />
+                <YAxis dataKey="stage" type="category" width={82} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6e7c92" }} />
+                <Tooltip {...chartTooltip} formatter={(value: any, _n: any, props: any) => [`${formatCurrency(Number(value ?? 0))} (${props.payload.count} deal${props.payload.count !== 1 ? 's' : ''})`, "Value"]} />
+                <Bar dataKey="amount" name="Pipeline" radius={[0, 5, 5, 0]}>
+                  {livePipelineByStage.map(entry => (<Cell key={entry.stage} fill={stageColors[entry.stage]} />))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        <ChartCard title="Invoices mix" subtitle="All invoice statuses · EUR + USD + EGP (EUR equiv)">
+          <div className="crm-collection-chart">
+            <ResponsiveContainer width="48%" height={210}>
+              <PieChart>
+                <Pie data={liveCollectionsByStatus} dataKey="amount" nameKey="status" innerRadius={58} outerRadius={82} paddingAngle={4}>
+                  {liveCollectionsByStatus.map((entry: any) => (
+                    <Cell key={entry.status} fill={({ Paid: "#2a9d8f", Issued: "#5b6b8c", Downpayment: "#f59e0b", Overdue: "#d86c75" } as Record<string,string>)[entry.status] ?? "#ccc"} />
+                  ))}
+                </Pie>
+                <Tooltip {...chartTooltip} formatter={(value: any) => formatCurrency(Number(value ?? 0))} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="flex-1 space-y-3">
+              {liveCollectionsByStatus.map((entry: any) => (
+                <div key={entry.status} className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-[12px] text-[#6f7d92]">
+                    <span className="crm-legend-dot" style={{ backgroundColor: ({ Paid: "#2a9d8f", Issued: "#5b6b8c", Downpayment: "#f59e0b", Overdue: "#d86c75" } as Record<string,string>)[entry.status] }} />
+                    {entry.status}
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[12px] font-bold text-[#27354b]">{formatCurrency(entry.amount, true)}</div>
+                    <div className="text-[10px] text-[#a0abba]">{entry.count} invoice{entry.count > 1 ? "s" : ""}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ChartCard>
+
+        <ChartCard title="Commercial momentum" subtitle="Monthly movement · All currencies (EUR equiv)">
+          <div className="crm-chart-wrap">
+            <ResponsiveContainer width="100%" height={210}>
+              <ComposedChart data={liveMomentum} margin={{ top: 12, right: 8, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2a9d8f" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#2a9d8f" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke="#edf0f5" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8b98aa" }} tickFormatter={(v: number) => `€${Math.round(v / 1000)}k`} />
+                <Tooltip {...chartTooltip} labelFormatter={(label) => `Month: ${label}`} formatter={(value: any, name: any) => [formatCurrency(Number(value ?? 0)), name]} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11, color: "#6e7c92" }} />
+                <Area type="monotone" name="Revenue Achieved" dataKey="achieved" stroke="#2a9d8f" fill="url(#revenueFill)" strokeWidth={2.5} />
+                <Line type="monotone" name="Gross Profit" dataKey="collected" stroke="#f4a261" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" name="Open Pipeline" dataKey="pipeline" stroke="#5b6b8c" strokeWidth={2} dot={false} strokeDasharray="4 5" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* Per-currency breakdown */}
+      <h3 className="font-semibold text-lg mt-8 mb-2">EUR Business</h3>
       <div className="crm-stat-grid crm-stat-grid-3">
-        <StatCard label="Revenue Achieved" value={formatCurrency(metricsEUR.dashboardAchieved, true)} accent="teal" helper="-" />
-        <StatCard label="Open Pipeline" value={formatCurrency(metricsEUR.dashboardOpenPipeline, true)} accent="amber" helper="-" />
-        <StatCard label="Invoices at Risk" value={formatCurrency(metricsEUR.dashboardOverdueExposure, true)} accent="rose" helper="-" />
+        <StatCard label="Revenue Achieved" value={formatCurrency(metricsEUR.dashboardAchieved, true)} accent="teal" helper={`${Math.round(dashboardAttainment * 100)}% of target`} />
+        <StatCard label="Open Pipeline" value={formatCurrency(metricsEUR.dashboardOpenPipeline, true)} accent="amber" helper={`${metricsEUR.activeDeals} deals`} />
+        <StatCard label="Invoices at Risk" value={formatCurrency(metricsEUR.dashboardOverdueExposure, true)} accent="rose" helper="Overdue" />
       </div>
-
       <h3 className="font-semibold text-lg mt-6 mb-2">USD Business</h3>
       <div className="crm-stat-grid crm-stat-grid-3">
         <StatCard label="Revenue Achieved" value={formatCurrencyUSD(metricsUSD.dashboardAchieved, true)} accent="teal" helper="-" />
-        <StatCard label="Open Pipeline" value={formatCurrencyUSD(metricsUSD.dashboardOpenPipeline, true)} accent="amber" helper="-" />
-        <StatCard label="Invoices at Risk" value={formatCurrencyUSD(metricsUSD.dashboardOverdueExposure, true)} accent="rose" helper="-" />
+        <StatCard label="Open Pipeline" value={formatCurrencyUSD(metricsUSD.dashboardOpenPipeline, true)} accent="amber" helper={`${metricsUSD.activeDeals} deals`} />
+        <StatCard label="Invoices at Risk" value={formatCurrencyUSD(metricsUSD.dashboardOverdueExposure, true)} accent="rose" helper="Overdue" />
       </div>
-
       <h3 className="font-semibold text-lg mt-6 mb-2">EGP Business</h3>
       <div className="crm-stat-grid crm-stat-grid-3">
         <StatCard label="Revenue Achieved" value={formatCurrencyEGP(metricsEGP.dashboardAchieved, true)} accent="teal" helper="-" />
-        <StatCard label="Open Pipeline" value={formatCurrencyEGP(metricsEGP.dashboardOpenPipeline, true)} accent="amber" helper="-" />
-        <StatCard label="Invoices at Risk" value={formatCurrencyEGP(metricsEGP.dashboardOverdueExposure, true)} accent="rose" helper="-" />
+        <StatCard label="Open Pipeline" value={formatCurrencyEGP(metricsEGP.dashboardOpenPipeline, true)} accent="amber" helper={`${metricsEGP.activeDeals} deals`} />
+        <StatCard label="Invoices at Risk" value={formatCurrencyEGP(metricsEGP.dashboardOverdueExposure, true)} accent="rose" helper="Overdue" />
       </div>
     </PageFrame>
   );
