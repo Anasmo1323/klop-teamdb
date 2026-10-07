@@ -1298,7 +1298,7 @@ export function ForecastPage() {
       !["Closed Won", "Closed Lost"].includes(row.stage) && row.amount > 0,
   ).length;
   const liveWinRate = totalDealAmount ? liveWonDeals / totalDealAmount : 0;
-  const { sortedData, sortConfig, requestSort } = useTableSort(rows, { key: "code", direction: "desc" });
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows, { key: "code", direction: "asc" });
   const exportRows = sortedData.map((row) => [
     row.id,
     row.code ?? "",
