@@ -339,7 +339,7 @@ export function DashboardPage() {
     const groups: Record<string, { amount: number; count: number }> = { Issued: { amount: 0, count: 0 }, Downpayment: { amount: 0, count: 0 }, Paid: { amount: 0, count: 0 }, Overdue: { amount: 0, count: 0 } };
     allInvoiceRows.forEach((row: InvoiceRow) => {
       const status = row.invoiceStatus || "Issued";
-      if (groups[status]) { groups[status].amount += row.amount; groups[status].count += 1; }
+      if (groups[status]) { groups[status].amount += (status === "Downpayment" ? (row.downPayment || 0) : row.amount); groups[status].count += 1; }
     });
     return Object.entries(groups).map(([status, v]) => ({ status, amount: v.amount, count: v.count }));
   }, [allInvoiceRows]);
