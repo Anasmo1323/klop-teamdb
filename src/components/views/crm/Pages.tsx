@@ -172,8 +172,8 @@ const toLocalISO = (d: Date) => {
 };
 
 
-export function useTableSort<T>(data: T[]) {
-  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+export function useTableSort<T>(data: T[], initialSort: { key: string, direction: 'asc' | 'desc' } | null = null) {
+  const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(initialSort);
 
   const sortedData = useMemo(() => {
     let sortableItems = [...data];
@@ -1298,7 +1298,8 @@ export function ForecastPage() {
       !["Closed Won", "Closed Lost"].includes(row.stage) && row.amount > 0,
   ).length;
   const liveWinRate = totalDealAmount ? liveWonDeals / totalDealAmount : 0;
-  const exportRows = store.rows.map((row) => [
+  const { sortedData, sortConfig, requestSort } = useTableSort(rows, { key: "code", direction: "desc" });
+  const exportRows = sortedData.map((row) => [
     row.id,
     row.code ?? "",
     row.productLine ?? row.product,
@@ -1342,7 +1343,6 @@ export function ForecastPage() {
     setAdding(false);
     toast.success("Pipeline record added. Save changes to keep it.");
   };
-  const { sortedData, sortConfig, requestSort } = useTableSort(rows);
   return (
     <PageFrame>
       <RouteTableHeader
