@@ -23,7 +23,8 @@ export const ALLOWED_USERS = [
 ];
 
 export const HARDCODED_ADMINS = [
-  "albear@technowave-eg.com"
+  "albear@technowave-eg.com",
+  "amohamed@technowave-eg.com"
 ];
 
 export type Contact = {
