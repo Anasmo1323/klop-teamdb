@@ -1240,7 +1240,10 @@ export function ForecastPage() {
   const store = useEditableRows(pipelineMode === "EUR" ? "medsales-forecast" : pipelineMode === "USD" ? "medsales-forecast-usd" : "medsales-forecast-egp", pipelineMode === "EUR" ? deals : []);
   const targetStore = useEditableRows("medsales-targets", []);
   useHighlightRow(store.rows);
-  const productLineOptions = Array.from(new Set(targetStore.rows.map((r: any) => r.productLine).filter(Boolean))) as string[];
+  let productLineOptions = Array.from(new Set(targetStore.rows.map((r: any) => r.productLine).filter(Boolean))) as string[];
+  if (productLineOptions.length === 0) {
+    productLineOptions = ["KLS Martin", "OperaMed", "Diagon", "Other"];
+  }
   const rows = store.rows.filter(
     (row) =>
       (row.client || "").toLowerCase().includes((search || "").toLowerCase()) &&
